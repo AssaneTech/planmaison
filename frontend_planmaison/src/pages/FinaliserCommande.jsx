@@ -5,7 +5,6 @@ const FinaliserCommande = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Récupération du plan envoyé depuis VoirDetails
   const plan = location.state?.plan || {
     id: 1,
     name: "Villa Moderne 3 Chambres",
@@ -32,7 +31,7 @@ const FinaliserCommande = () => {
     e.preventDefault();
 
     if (!formData.paiement) {
-      alert("Veuillez choisir une méthode de paiement.");
+      alert("Choisissez une méthode de paiement");
       return;
     }
 
@@ -55,47 +54,47 @@ const FinaliserCommande = () => {
   };
 
   return (
-    <div className="bg-gradient-to-b from-gray-50 to-white min-h-screen pt-28 px-6">
+    <div className="bg-gray-50 min-h-screen pt-28 px-6">
       <div className="max-w-5xl mx-auto">
 
-        {/* Titre */}
+        {/* HEADER */}
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-extrabold text-gray-800">
-            Finaliser votre <span className="text-indigo-600">Commande</span>
+          <h2 className="text-4xl font-extrabold">
+            Finaliser votre <span className="text-green-700">commande</span>
           </h2>
           <p className="text-gray-600 mt-3">
-            Complétez vos informations pour recevoir votre plan personnalisé.
+            Paiement rapide et sécurisé
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-10">
 
-          {/* Résumé du plan */}
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-md p-6">
-            <h3 className="text-xl font-semibold mb-6 text-gray-800">
+          {/* PLAN */}
+          <div className="bg-white rounded-2xl shadow p-6">
+            <h3 className="text-lg font-semibold mb-4">
               Résumé du plan
             </h3>
 
             <img
               src={plan.image}
               alt={plan.name}
-              className="w-full h-56 object-cover rounded-xl mb-6"
+              className="w-full h-52 object-cover rounded-xl mb-4"
             />
 
-            <h4 className="text-lg font-semibold mb-2">{plan.name}</h4>
-            <p className="text-gray-500 mb-2">Surface : {plan.surface}</p>
+            <h4 className="font-semibold">{plan.name}</h4>
+            <p className="text-gray-500 text-sm">Surface : {plan.surface}</p>
 
-            <div className="mt-6 text-2xl font-bold text-indigo-600">
+            <div className="mt-4 text-xl font-bold text-[#D4AF37]">
               {formatPrice(plan.price)}
             </div>
           </div>
 
-          {/* Formulaire */}
+          {/* FORM */}
           <form
             onSubmit={handleSubmit}
-            className="bg-white border border-gray-200 rounded-2xl shadow-md p-8 space-y-6"
+            className="bg-white rounded-2xl shadow p-8 space-y-5"
           >
-            <h3 className="text-xl font-semibold text-gray-800">
+            <h3 className="text-lg font-semibold">
               Informations client
             </h3>
 
@@ -111,7 +110,7 @@ const FinaliserCommande = () => {
             <input
               type="email"
               name="email"
-              placeholder="Adresse email"
+              placeholder="Email"
               required
               onChange={handleChange}
               className="input-style"
@@ -126,53 +125,40 @@ const FinaliserCommande = () => {
               className="input-style"
             />
 
-            {/* Paiement */}
+            {/* PAIEMENT */}
             <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">
+              <h4 className="text-sm font-semibold mb-3">
                 Méthode de paiement
               </h4>
 
               <div className="space-y-3">
-                <label className="flex items-center gap-3 border rounded-xl p-3 cursor-pointer hover:border-indigo-500 transition">
-                  <input
-                    type="radio"
-                    name="paiement"
-                    value="wave"
-                    onChange={handleChange}
-                  />
-                  Wave
+
+                <label className={`paiement-option ${formData.paiement === "wave" && "selected"}`}>
+                  <input type="radio" name="paiement" value="wave" onChange={handleChange}/>
+                  <span>📱 Wave (recommandé)</span>
                 </label>
 
-                <label className="flex items-center gap-3 border rounded-xl p-3 cursor-pointer hover:border-indigo-500 transition">
-                  <input
-                    type="radio"
-                    name="paiement"
-                    value="orange-money"
-                    onChange={handleChange}
-                  />
-                  Orange Money
+                <label className={`paiement-option ${formData.paiement === "orange-money" && "selected"}`}>
+                  <input type="radio" name="paiement" value="orange-money" onChange={handleChange}/>
+                  <span>🟠 Orange Money</span>
                 </label>
 
-                <label className="flex items-center gap-3 border rounded-xl p-3 cursor-pointer hover:border-indigo-500 transition">
-                  <input
-                    type="radio"
-                    name="paiement"
-                    value="carte"
-                    onChange={handleChange}
-                  />
-                  Carte bancaire
+                <label className={`paiement-option ${formData.paiement === "carte" && "selected"}`}>
+                  <input type="radio" name="paiement" value="carte" onChange={handleChange}/>
+                  <span>💳 Carte bancaire</span>
                 </label>
+
               </div>
             </div>
 
             <p className="text-xs text-gray-500">
-              Après paiement validé, votre compte sera créé automatiquement
-              et vos identifiants vous seront envoyés par email.
+              Un compte sera créé automatiquement après paiement.
             </p>
 
+            {/* CTA */}
             <button
               type="submit"
-              className="w-full bg-indigo-600 text-white font-semibold px-6 py-3 rounded-2xl hover:bg-indigo-500 transition shadow-md hover:shadow-lg"
+              className="w-full bg-green-700 text-white py-3 rounded-xl font-bold hover:bg-green-600 transition"
             >
               Payer {formatPrice(plan.price)}
             </button>
@@ -180,11 +166,23 @@ const FinaliserCommande = () => {
         </div>
       </div>
 
-      {/* Style input */}
+      {/* STYLES */}
       <style jsx>{`
         .input-style {
-          @apply w-full border border-gray-300 bg-gray-50 px-4 py-3 rounded-xl 
-          focus:outline-none focus:ring-2 focus:ring-indigo-500 transition;
+          @apply w-full border border-gray-200 bg-gray-50 px-4 py-3 rounded-xl 
+          focus:outline-none focus:ring-2 focus:ring-green-200 transition;
+        }
+
+        .paiement-option {
+          @apply flex items-center gap-3 border rounded-xl p-3 cursor-pointer transition;
+        }
+
+        .paiement-option:hover {
+          @apply border-green-500;
+        }
+
+        .selected {
+          @apply border-green-600 bg-green-50;
         }
       `}</style>
     </div>

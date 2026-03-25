@@ -3,130 +3,160 @@ import React, { useState } from "react";
 const SurMesureContextuel = () => {
   const [formData, setFormData] = useState({
     nomComplet: "",
-    telephone: "", // Crucial pour le Sénégal
+    telephone: "",
     email: "",
     dimensionsTerrain: "",
     nombrePieces: "",
-    descriptionProjet: "", // Zone de texte libre pour le style, budget, etc.
+    descriptionProjet: "",
+    fichierTerrain: null,
   });
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (e.target.name === "fichierTerrain") {
+      setFormData({ ...formData, fichierTerrain: e.target.files[0] });
+    } else {
+      setFormData({ ...formData, [e.target.name]: e.target.value });
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Note pour l'Ingénieur Software : C'est ici que tu appelleras ton API Node.js
-    // pour stocker cette demande spécifique de "Sur-Mesure depuis Catalogue".
-    console.log("Demande de plan sur-mesure reçue du Catalogue:", formData);
-    
-    // Une fois envoyé, on peut rediriger vers une page de remerciement
-    // navigate("/merci-demande-sur-mesure");
+
+    // 🔥 Préparation pour backend
+    const data = new FormData();
+    Object.keys(formData).forEach((key) => {
+      data.append(key, formData[key]);
+    });
+
+    console.log("Demande envoyée :", formData);
+
+    // Ici tu enverras vers ton backend
+    // fetch("/api/sur-mesure", { method: "POST", body: data })
   };
 
   return (
     <div className="bg-white p-10 md:p-12 rounded-3xl shadow-xl border border-gray-100 max-w-4xl mx-auto my-16">
-      
-      {/* En-tête : Approche empathique et valorisation technique */}
-      <div className="text-center mb-12 border-b border-gray-100 pb-10">
-        <span className="text-5xl mb-4 block">✍️</span>
-        <h2 className="text-4xl font-extrabold text-gray-950 mb-4 tracking-tight">
-          Vous n'avez pas trouvé le <span className="text-indigo-600">plan idéal</span> ?
+
+      {/* HEADER */}
+      <div className="text-center mb-12 border-b pb-10">
+        <h2 className="text-4xl font-extrabold mb-4">
+          Plan <span className="text-green-700">sur mesure</span>
         </h2>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto font-light leading-relaxed">
-          Décrivez-nous votre projet en quelques lignes. Nos **ingénieurs civils** concevront un plan unique, parfaitement adapté à votre terrain et conforme aux normes d'autorisation de construire au Sénégal.
+
+        <p className="text-gray-600 max-w-2xl mx-auto">
+          Décrivez votre projet et joignez votre extrait de plan si disponible.
         </p>
       </div>
 
-      {/* Le Formulaire Compact */}
       <form onSubmit={handleSubmit} className="space-y-8">
-        
-        {/* Section 1 : Coordonnées (Grille 2 colonnes) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="col-span-1 md:col-span-2 relative">
-            <input
-              type="text"
-              name="nomComplet"
-              placeholder="Votre Nom Complet"
-              value={formData.nomComplet}
-              onChange={handleChange}
-              required
-              className="w-full pl-6 pr-6 py-4 rounded-full bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition duration-300 text-lg"
-            />
-          </div>
-          
+
+        {/* INFOS */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <input
+            type="text"
+            name="nomComplet"
+            placeholder="Nom complet"
+            required
+            onChange={handleChange}
+            className="input-style col-span-2"
+          />
+
           <input
             type="tel"
             name="telephone"
-            placeholder="Téléphone (Wave/Orange Money)"
-            value={formData.telephone}
-            onChange={handleChange}
+            placeholder="Téléphone"
             required
-            className="w-full pl-6 pr-6 py-4 rounded-full bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition duration-300 text-lg"
+            onChange={handleChange}
+            className="input-style"
           />
-          
+
           <input
             type="email"
             name="email"
-            placeholder="Adresse E-mail"
-            value={formData.email}
-            onChange={handleChange}
+            placeholder="Email"
             required
-            className="w-full pl-6 pr-6 py-4 rounded-full bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition duration-300 text-lg"
+            onChange={handleChange}
+            className="input-style"
           />
         </div>
 
-        {/* Section 2 : Informations Techniques de base (Grille 2 colonnes) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* TECHNIQUE */}
+        <div className="grid md:grid-cols-2 gap-6">
           <input
             type="text"
             name="dimensionsTerrain"
-            placeholder="Dimensions du terrain (ex: 10m x 20m)"
-            value={formData.dimensionsTerrain}
-            onChange={handleChange}
+            placeholder="Dimensions (ex: 10x20)"
             required
-            className="w-full pl-6 pr-6 py-4 rounded-full bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition duration-300 text-lg"
+            onChange={handleChange}
+            className="input-style"
           />
-          
+
           <input
             type="number"
             name="nombrePieces"
-            placeholder="Nombre de pièces souhaitées (ex: 5)"
-            value={formData.nombrePieces}
-            onChange={handleChange}
+            placeholder="Nombre de pièces"
             required
-            className="w-full pl-6 pr-6 py-4 rounded-full bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition duration-300 text-lg"
+            onChange={handleChange}
+            className="input-style"
           />
         </div>
 
-        {/* Section 3 : Description libre du projet */}
-        <div className="relative">
-          <textarea
-            name="descriptionProjet"
-            placeholder="Décrivez votre maison idéale : style (moderne, traditionnel), budget approximatif, besoins spéciaux (garage, bureau, piscine)..."
-            value={formData.descriptionProjet}
+        {/* DESCRIPTION */}
+        <textarea
+          name="descriptionProjet"
+          placeholder="Décrivez votre projet..."
+          rows="5"
+          required
+          onChange={handleChange}
+          className="w-full p-5 rounded-2xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-green-200"
+        />
+
+        {/* 🔥 UPLOAD FICHIER */}
+        <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center bg-gray-50 hover:border-green-400 transition">
+          <p className="text-gray-600 mb-2">
+            📎 Joindre un extrait de plan (facultatif)
+          </p>
+          <p className="text-sm text-gray-400 mb-4">
+            PDF, image ou capture de votre terrain
+          </p>
+
+          <input
+            type="file"
+            name="fichierTerrain"
+            accept=".pdf,image/*"
             onChange={handleChange}
-            rows="5"
-            required
-            className="w-full p-6 rounded-3xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition duration-300 text-lg leading-relaxed"
+            className="block mx-auto text-sm"
           />
+
+          {formData.fichierTerrain && (
+            <p className="mt-3 text-green-700 text-sm">
+              Fichier sélectionné : {formData.fichierTerrain.name}
+            </p>
+          )}
         </div>
 
-        {/* Bouton d'action principal */}
-        <div className="text-center pt-4">
+        {/* BUTTON */}
+        <div className="text-center">
           <button
             type="submit"
-            className="w-full md:w-auto bg-indigo-600 text-white font-bold px-12 py-5 rounded-full shadow-lg hover:bg-indigo-700 hover:shadow-indigo-100 transition duration-300 transform hover:scale-[1.03] text-xl flex items-center justify-center space-x-3 mx-auto"
+            className="bg-green-700 text-white px-10 py-4 rounded-full font-bold hover:bg-green-600 transition"
           >
-            <span>🛠️</span>
-            <span>Demander mon étude sur-mesure</span>
+            Envoyer ma demande
           </button>
-          <p className="text-xs text-gray-400 mt-5">
-            Note : Nos ingénieurs civils analyseront votre demande et vous contacteront sous 48h pour un devis détaillé.
+
+          <p className="text-xs text-gray-400 mt-4">
+            Réponse sous 48h par nos ingénieurs
           </p>
         </div>
-
       </form>
+
+      {/* STYLE */}
+      <style jsx>{`
+        .input-style {
+          @apply w-full px-5 py-3 rounded-full border border-gray-200 bg-gray-50 
+          focus:outline-none focus:ring-2 focus:ring-green-200 transition;
+        }
+      `}</style>
     </div>
   );
 };

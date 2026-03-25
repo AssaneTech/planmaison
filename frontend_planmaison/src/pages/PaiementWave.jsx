@@ -10,36 +10,69 @@ const PaiementWave = () => {
     return <div className="pt-32 text-center">Aucune commande trouvée.</div>;
   }
 
+  const formatPrice = (price) =>
+    new Intl.NumberFormat("fr-FR").format(price) + " FCFA";
+
   const handleSuccess = () => {
     navigate("/commande-succes", { state: { plan } });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-28 px-6">
-      <div className="max-w-xl mx-auto bg-white shadow-lg rounded-2xl p-10 text-center">
+    <div className="min-h-screen bg-gray-50 pt-28 px-6">
+      <div className="max-w-xl mx-auto bg-white shadow-xl rounded-3xl p-10 text-center">
 
-        <h2 className="text-3xl font-bold text-blue-600 mb-6">
-          Paiement via Wave
+        {/* HEADER */}
+        <h2 className="text-3xl font-extrabold mb-4">
+          Paiement via <span className="text-blue-600">Wave</span>
         </h2>
 
-        <p className="text-gray-600 mb-4">
-          Vous allez payer pour :
+        <p className="text-gray-600 mb-6">
+          Paiement rapide et sécurisé
         </p>
 
-        <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
-        <p className="text-2xl font-bold text-indigo-600 mb-8">
-          {new Intl.NumberFormat("fr-FR").format(plan.price)} FCFA
-        </p>
-
-        <div className="bg-blue-50 border border-blue-200 p-6 rounded-xl mb-8">
-          Simulation de paiement Wave
+        {/* PLAN */}
+        <div className="bg-gray-50 p-6 rounded-xl mb-6">
+          <h3 className="font-semibold text-lg">{plan.name}</h3>
+          <p className="text-[#D4AF37] text-2xl font-bold mt-2">
+            {formatPrice(plan.price)}
+          </p>
         </div>
 
+        {/* INSTRUCTIONS */}
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-left mb-8">
+          <h4 className="font-semibold text-blue-700 mb-3">
+            Instructions :
+          </h4>
+
+          <ul className="text-sm text-gray-700 space-y-2">
+            <li>1. Ouvrez votre application Wave</li>
+            <li>2. Envoyez le montant exact</li>
+            <li>3. Numéro : <span className="font-bold">77 000 00 00</span></li>
+            <li>4. Cliquez sur confirmer après paiement</li>
+          </ul>
+        </div>
+
+        {/* TRUST */}
+        <div className="text-xs text-gray-500 mb-6">
+          ✔ Paiement sécurisé  
+          ✔ Livraison immédiate après validation  
+          ✔ Support disponible
+        </div>
+
+        {/* BUTTON */}
         <button
           onClick={handleSuccess}
-          className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-500 transition"
+          className="w-full bg-green-700 text-white py-4 rounded-xl font-bold hover:bg-green-600 transition"
         >
-          Confirmer le paiement
+          J’ai effectué le paiement
+        </button>
+
+        {/* BACK */}
+        <button
+          onClick={() => navigate(-1)}
+          className="mt-4 text-sm text-gray-500 hover:underline"
+        >
+          ← Retour
         </button>
 
       </div>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -7,87 +8,113 @@ const Login = () => {
     motDePasse: "",
   });
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Note pour l'Ingénieur Software (MERN Stack) :
-    // C'est ici que tu appelleras ton API Node.js/Express pour authentifier l'utilisateur.
-    console.log("Tentative de connexion avec :", formData);
-    
-    // Une fois connecté, tu redirigeras vers son espace client
-    // navigate("/mon-espace-client");
+    setLoading(true);
+
+    console.log("Login :", formData);
+
+    setTimeout(() => {
+      setLoading(false);
+    }, 800);
   };
 
   return (
-    // Conteneur principal : Flexbox pour centrer parfaitement le cadre
-    <div className="bg-gray-50 min-h-screen text-gray-900 flex items-center justify-center p-4">
-      
-      {/* CADRE UNIQUE ET CENTRÉ (Maximum simplicité) */}
-      <div className="bg-white p-10 md:p-12 rounded-3xl shadow-xl border border-gray-100 w-full max-w-md flex flex-col items-center">
-        
-        {/* Titre simple et impactant */}
-        <h1 className="text-3xl font-extrabold text-gray-950 tracking-tight mb-10 text-center">
-            Connexion <span className="text-indigo-600">PlanMaison</span>
-        </h1>
-        
-        {/* Le Formulaire Compact */}
-        <form onSubmit={handleSubmit} className="space-y-6 w-full">
-          
-          {/* Champ E-mail */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-gray-700 tracking-wide pl-1">Adresse e-mail</label>
-            <input 
-              type="email" 
-              name="email" 
-              placeholder="votre.email@exemple.com" 
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+
+      <div className="w-full max-w-md bg-white rounded-2xl shadow p-8">
+
+        {/* HEADER */}
+        <div className="text-center mb-8">
+          <img src="/logo.png" className="h-10 mx-auto mb-3" />
+          <h1 className="text-2xl font-bold">
+            Connexion <span className="text-green-700">PlanMaison</span>
+          </h1>
+        </div>
+
+        {/* FORM */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+
+          {/* EMAIL */}
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">
+              Email
+            </label>
+
+            <input
+              type="email"
+              name="email"
+              placeholder="exemple@email.com"
               value={formData.email}
-              onChange={handleChange} 
-              required 
-              className="w-full pl-6 pr-6 py-3.5 rounded-full bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition duration-300 text-lg font-semibold" 
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-200"
             />
           </div>
 
-          {/* Champ Mot de Passe */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-baseline">
-              <label className="text-sm font-semibold text-gray-700 tracking-wide pl-1">Mot de passe</label>
-              <Link to="/mot-de-passe-oublie" className="text-sm text-indigo-600 hover:underline">Oublié ?</Link>
+          {/* PASSWORD */}
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between items-center">
+              <label className="text-sm font-medium text-gray-700">
+                Mot de passe
+              </label>
+
+              <Link
+                to="/mot-de-passe-oublie"
+                className="text-sm text-green-700 hover:underline"
+              >
+                Oublié ?
+              </Link>
             </div>
-            <input 
-              type="password" 
-              name="motDePasse" 
-              placeholder="votre-mot-de-passe-sécurisé" 
-              value={formData.motDePasse}
-              onChange={handleChange} 
-              required 
-              className="w-full pl-6 pr-6 py-3.5 rounded-full bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition duration-300 text-lg font-semibold" 
-            />
+
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="motDePasse"
+                placeholder="********"
+                value={formData.motDePasse}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 pr-12 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-200"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
+              </button>
+            </div>
           </div>
 
-          {/* Bouton de Connexion (Design Pill) */}
-          <div className="pt-6 border-t border-gray-100 mt-10 w-full">
-            <button
-                type="submit"
-                className="w-full bg-indigo-600 text-white font-bold px-8 py-4 rounded-full shadow-lg hover:bg-indigo-700 hover:shadow-indigo-100 transition duration-300 transform hover:scale-[1.02] text-xl flex items-center justify-center space-x-3"
-            >
-                <span>Se connecter</span>
-            </button>
-          </div>
+          {/* BUTTON */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-green-700 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition"
+          >
+            {loading ? "Connexion..." : "Se connecter"}
+          </button>
 
         </form>
 
-        {/* Section pour l'inscription */}
-        <div className="mt-10 text-center border-t border-gray-100 pt-7 w-full">
-            <p className="text-sm text-gray-600">
-                Pas de compte ? <Link to="/inscription" className="text-indigo-600 hover:underline font-medium">S'inscrire</Link>
-            </p>
+        {/* FOOTER */}
+        <div className="mt-6 text-center text-sm text-gray-600">
+          Pas de compte ?{" "}
+          <Link to="/inscription" className="text-green-700 font-medium">
+            S'inscrire
+          </Link>
         </div>
 
       </div>
-
     </div>
   );
 };
