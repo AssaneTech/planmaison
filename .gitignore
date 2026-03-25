@@ -1,0 +1,30 @@
+# Node modules
+node_modules/
+*/node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Env files (IMPORTANT)
+.env
+*/.env
+
+# Build folders
+build/
+dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# React
+frontend_planmaison/build/
+
+# Backend
+backend_planmaison/uploads/
