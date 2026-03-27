@@ -1,41 +1,41 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 
-const plans = [
-  {
-    id: 1,
-    image: "/plan-1.png",
-    name: "Villa Moderne F4",
-    price: 450000,
-    surface: "150 m²",
-    dimensions: "10m x 15m",
-  },
-  {
-    id: 2,
-    image: "/plan-2.png",
-    name: "Duplex Standing F5",
-    price: 650000,
-    surface: "220 m²",
-    dimensions: "15m x 20m",
-  },
-  {
-    id: 3,
-    image: "/plan-3.png",
-    name: "Studio Compact Éco",
-    price: 250000,
-    surface: "45 m²",
-    dimensions: "8m x 12m",
-  },
-];
+const API_URL = "http://localhost:5000";
 
 const Catalogue = () => {
+  const [plans, setPlans] = useState([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    console.log("🔄 Fetching plans...");
+
+    fetch(`${API_URL}/plans`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Erreur serveur");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        console.log("✅ DATA:", data);
+        setPlans(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("❌ ERREUR:", err);
+        setError("Impossible de charger les plans");
+        setLoading(false);
+      });
+  }, []);
 
   const filteredPlans = useMemo(() => {
     return plans.filter((plan) =>
       plan.name.toLowerCase().includes(search.toLowerCase())
     );
-  }, [search]);
+  }, [plans, search]);
 
   const formatPrice = (price) =>
     new Intl.NumberFormat("fr-FR").format(price) + " FCFA";
@@ -51,111 +51,76 @@ const Catalogue = () => {
           </h1>
 
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Découvrez des plans modernes adaptés aux terrains du Sénégal,
-            prêts pour votre autorisation de construire.
+            Découvrez des plans modernes adaptés aux terrains du Sénégal.
           </p>
         </div>
 
         {/* SEARCH */}
         <div className="flex justify-center mb-16">
           <div className="relative w-full max-w-xl">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-5 text-gray-400">
-              🔍
-            </span>
-
             <input
               type="text"
-              placeholder="Rechercher (villa, duplex, studio...)"
+              placeholder="🔍 Rechercher (villa, duplex...)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-14 pr-6 py-4 rounded-full 
-              bg-white border border-gray-200 
-              focus:outline-none focus:ring-2 focus:ring-green-200 
-              transition text-lg"
+              className="w-full px-6 py-4 rounded-full bg-white border border-gray-200 focus:ring-2 focus:ring-green-200"
             />
           </div>
         </div>
 
+        {/* LOADING */}
+        {loading && (
+          <div className="text-center py-20 text-gray-500">
+            Chargement...
+          </div>
+        )}
+
+        {/* ERROR */}
+        {error && (
+          <div className="text-center py-20 text-red-500">
+            {error}
+          </div>
+        )}
+
         {/* GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {filteredPlans.length > 0 ? (
-            filteredPlans.map((plan) => (
-              <div
-                key={plan.id}
-                className="group bg-white border border-gray-100 
-                rounded-3xl overflow-hidden shadow-sm hover:shadow-xl 
-                transition transform hover:-translate-y-2"
-              >
-                {/* IMAGE */}
-                <div className="overflow-hidden">
+        {!loading && !error && (
+          <div className="grid md:grid-cols-3 gap-10">
+            {filteredPlans.length > 0 ? (
+              filteredPlans.map((plan) => (
+                <div key={plan.id} className="bg-white rounded-3xl shadow p-5">
+
                   <img
-                    src={plan.image}
+                    src={plan.images[0]}
                     alt={plan.name}
-                    className="w-full h-56 object-cover 
-                    group-hover:scale-105 transition duration-500"
+                    className="w-full h-52 object-cover rounded-xl mb-4"
                   />
-                </div>
 
-                {/* CONTENT */}
-                <div className="p-6">
-                  <h3 className="text-xl font-bold mb-2 group-hover:text-green-700 transition">
-                    {plan.name}
-                  </h3>
+                  <h3 className="font-bold text-lg">{plan.name}</h3>
 
-                  {/* INFOS */}
-                  <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-4">
-                    <p>📏 {plan.dimensions}</p>
-                    <p>📐 {plan.surface}</p>
-                  </div>
+                  <p className="text-sm text-gray-500">
+                    {plan.dimensions} • {plan.surface}
+                  </p>
 
-                  {/* PRICE */}
-                  <p className="text-[#D4AF37] font-bold text-xl mb-5">
+                  <p className="text-[#D4AF37] font-bold text-xl mt-2">
                     {formatPrice(plan.price)}
                   </p>
 
-                  {/* BUTTON */}
                   <Link
                     to={`/details/${plan.id}`}
-                    className="block text-center bg-green-700 text-white 
-                    py-3 rounded-full font-semibold hover:bg-green-600 transition"
+                    className="block mt-4 bg-green-700 text-white text-center py-2 rounded-xl"
                   >
                     Voir détails
                   </Link>
+
                 </div>
+              ))
+            ) : (
+              <div className="col-span-full text-center text-gray-500">
+                Aucun plan trouvé
               </div>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-16 bg-white rounded-2xl border">
-              <p className="text-gray-500 text-lg">
-                Aucun plan trouvé.
-              </p>
-              <button
-                onClick={() => setSearch("")}
-                className="mt-4 text-green-700 font-semibold hover:underline"
-              >
-                Réinitialiser
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* CTA */}
-        <div className="mt-24 bg-green-800 p-12 rounded-3xl text-white text-center">
-          <h3 className="text-2xl font-bold mb-4">
-            Vous ne trouvez pas votre plan ?
-          </h3>
-
-          <p className="text-green-100 mb-6">
-            Demandez un plan sur mesure adapté à votre terrain.
-          </p>
-
-          <Link
-            to="/sur-mesure"
-            className="bg-[#D4AF37] text-black px-8 py-3 rounded-full font-semibold hover:opacity-90"
-          >
-            Plan sur mesure
-          </Link>
-        </div>
+            )}
+          </div>
+        )}
 
       </div>
     </div>

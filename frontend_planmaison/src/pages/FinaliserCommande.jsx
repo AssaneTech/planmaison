@@ -5,13 +5,7 @@ const FinaliserCommande = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const plan = location.state?.plan || {
-    id: 1,
-    name: "Villa Moderne 3 Chambres",
-    image: "/plan-1.png",
-    surface: "150 m²",
-    price: 450000,
-  };
+  const plan = location.state?.plan || null;
 
   const [formData, setFormData] = useState({
     nom: "",
@@ -53,6 +47,17 @@ const FinaliserCommande = () => {
     }
   };
 
+  // 🔥 IMAGE PRINCIPALE = image_0
+  const mainImage = plan?.images?.[0];
+
+  if (!plan) {
+    return (
+      <div className="text-center pt-32">
+        Aucune commande trouvée
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-50 min-h-screen pt-28 px-6">
       <div className="max-w-5xl mx-auto">
@@ -76,13 +81,15 @@ const FinaliserCommande = () => {
             </h3>
 
             <img
-              src={plan.image}
+              src={mainImage}
               alt={plan.name}
-              className="w-full h-52 object-cover rounded-xl mb-4"
+              className="w-full h-52 object-contain bg-gray-100 rounded-xl mb-4"
             />
 
-            <h4 className="font-semibold">{plan.name}</h4>
-            <p className="text-gray-500 text-sm">Surface : {plan.surface}</p>
+            <h4 className="font-semibold text-lg">{plan.name}</h4>
+            <p className="text-gray-500 text-sm">
+              Surface : {plan.surface}
+            </p>
 
             <div className="mt-4 text-xl font-bold text-[#D4AF37]">
               {formatPrice(plan.price)}
@@ -135,7 +142,7 @@ const FinaliserCommande = () => {
 
                 <label className={`paiement-option ${formData.paiement === "wave" && "selected"}`}>
                   <input type="radio" name="paiement" value="wave" onChange={handleChange}/>
-                  <span>📱 Wave (recommandé)</span>
+                  <span>📱 Wave</span>
                 </label>
 
                 <label className={`paiement-option ${formData.paiement === "orange-money" && "selected"}`}>
@@ -151,11 +158,6 @@ const FinaliserCommande = () => {
               </div>
             </div>
 
-            <p className="text-xs text-gray-500">
-              Un compte sera créé automatiquement après paiement.
-            </p>
-
-            {/* CTA */}
             <button
               type="submit"
               className="w-full bg-green-700 text-white py-3 rounded-xl font-bold hover:bg-green-600 transition"
@@ -166,7 +168,7 @@ const FinaliserCommande = () => {
         </div>
       </div>
 
-      {/* STYLES */}
+      {/* STYLE */}
       <style jsx>{`
         .input-style {
           @apply w-full border border-gray-200 bg-gray-50 px-4 py-3 rounded-xl 
