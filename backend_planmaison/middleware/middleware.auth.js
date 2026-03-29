@@ -1,15 +1,15 @@
-//middleware.auth.js
 const jwt = require('jsonwebtoken');
 
-const auth = (req, res, next) => {
+exports.protect = (req, res, next) => {
+  const token = req.header('Authorization')?.split(' ')[1];
+
+  if (!token) return res.status(401).json({ msg: "Accès refusé, token manquant" });
+
   try {
-    const token = req.header('Authorization').replace('Bearer ', '');
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.userId;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'baolmax_ultra_secret');
+    req.user = decoded.user;
     next();
-  } catch (error) {
-    res.status(401).json({ message: 'Unauthorized' });
+  } catch (err) {
+    res.status(401).json({ msg: "Token non valide" });
   }
 };
-
-module.exports = auth;

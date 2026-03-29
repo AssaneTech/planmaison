@@ -1,11 +1,19 @@
-//model.plan.js
-const mongoose = require('mongoose');
-const planSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  description: { type: String, required: true },
-  price: { type: Number, required: true },
-  duration: { type: Number, required: true },
-     
-}, { timestamps: true });
+// model.plan.js
+const mongoose = require("mongoose");
 
-module.exports = mongoose.model('Plan', planSchema);
+const planSchema = new mongoose.Schema({
+  name: String,
+  description: String,
+  price: Number,
+  surface: String,
+  dimensions: String,
+  rooms: Number,
+  type: String,
+  folder: String,
+  images: [String],
+  pdfs: [String],
+  isActive: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model("Plan", planSchema);

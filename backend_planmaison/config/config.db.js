@@ -1,16 +1,16 @@
-// config/config.db.js
-
+// config.db.js
 const mongoose = require("mongoose");
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(
-      process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/planmaison"
-    );
-
-    console.log(`✅ MongoDB connecté : ${conn.connection.host}`);
-  } catch (error) {
-    console.error("❌ Erreur MongoDB :", error.message);
+    const uri = process.env.MONGO_URI;
+    console.log("🔗 URI utilisé:", uri); // debug
+    if (!uri) throw new Error("MONGO_URI non défini");
+    
+    await mongoose.connect(uri); // plus besoin des options
+    console.log("✅ MongoDB Atlas connecté");
+  } catch (err) {
+    console.error("❌ Erreur de connexion MongoDB:", err.message);
     process.exit(1);
   }
 };

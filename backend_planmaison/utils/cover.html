@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; }
+    
+    body {
+      width: 210mm;
+      height: 297mm;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #ffffff;
+      color: #1a1a1a;
+    }
+
+    /* Liseré subtil sur le bord gauche pour le rappel tricolore */
+    .side-accent {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 6mm;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .accent-v { background: #00853f; flex: 1; }
+    .accent-o { background: #fdef42; flex: 1; }
+    .accent-r { background: #e31b23; flex: 1; }
+
+    .main-container {
+      margin-left: 6mm;
+      height: 100%;
+      padding: 15mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Header ultra-minimaliste */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 0.5px solid #e0e0e0;
+      padding-bottom: 8mm;
+    }
+
+    .rep-sn {
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #666;
+    }
+
+    .motto {
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    /* Titre Projet - Focus sur la typographie */
+    .project-hero {
+      margin-top: 15mm;
+    }
+
+    .doc-type {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 5px;
+      color: #00853f;
+      font-weight: 600;
+      margin-bottom: 5mm;
+      display: block;
+    }
+
+    .project-name {
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin: 0;
+      color: #1a1a1a;
+    }
+
+    /* Zone Centrale : Image avec cadre flottant */
+    .visual-container {
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .visual-container img {
+      max-width: 100%;
+      max-height: 380px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      border-radius: 2px;
+    }
+
+    /* Informations Intervenants */
+    .meta-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20mm;
+      margin-bottom: 15mm;
+    }
+
+    .info-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #999;
+      margin-bottom: 2mm;
+    }
+
+    .info-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    /* Footer Professionnel */
+    .footer {
+      border-top: 2px solid #1a1a1a;
+      padding-top: 8mm;
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      align-items: end;
+    }
+
+    .agency-brand {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .agency-logo {
+      width: 45px;
+      height: 45px;
+      background: #1a1a1a; /* Carré noir chic pour le logo */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 18px;
+    }
+
+    .agency-name {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .legal-contacts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      font-size: 10px;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .bold-dark { color: #1a1a1a; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <div class="side-accent">
+    <div class="accent-v"></div>
+    <div class="accent-o"></div>
+    <div class="accent-r"></div>
+  </div>
+
+  <div class="main-container">
+    
+    <header class="header">
+      <div>
+        <div class="rep-sn">République du Sénégal</div>
+        <div class="motto">Un Peuple · Un But · Une Foi</div>
+      </div>
+      <div style="text-align: right;">
+        <div class="info-label">Référence</div>
+        <div class="bold-dark" style="font-size: 12px;">${plan.ref}</div>
+      </div>
+    </header>
+
+    <section class="project-hero">
+      <span class="doc-type">Dossier d'exécution</span>
+      <h1 class="project-name">Construction d'une<br>${plan.name}</h1>
+    </section>
+
+    <div class="visual-container">
+      <img src="${plan.images[0]}" alt="Architectural Render">
+    </div>
+
+    <section class="meta-info">
+      <div>
+        <div class="info-label">Maître d'ouvrage</div>
+        <div class="info-value">${plan.client}</div>
+      </div>
+      <div>
+        <div class="info-label">Maître d'œuvre</div>
+        <div class="info-value">BAOLMAX <span style="font-weight: 300; color: #999;">Ingénierie</span></div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="agency-brand">
+        <div class="agency-logo">B</div>
+        <div>
+          <div class="agency-name">BAOLMAX</div>
+          <div style="font-size: 10px; color: #00853f; font-weight: 600;">Architecture & Civil Engineering</div>
+        </div>
+      </div>
+
+      <div class="legal-contacts">
+        <div>
+          <span class="bold-dark">Identification</span><br>
+          RCCM : ${plan.rccm}<br>
+          NINEA : ${plan.ninea}
+        </div>
+        <div style="text-align: right;">
+          <span class="bold-dark">Contact</span><br>
+          +221 77 348 69 30<br>
+          www.planmaison.sn
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+</body>
+</html>

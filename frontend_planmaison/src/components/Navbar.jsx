@@ -1,173 +1,164 @@
 import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { ArrowRight, Menu, User, X } from "lucide-react";
-
-const navLinks = [
-  { name: "Accueil", path: "/" },
-  { name: "Catalogue", path: "/catalogue" },
-  { name: "Sur Mesure", path: "/sur-mesure" },
-];
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { 
+  ArrowRight, Menu, User, X, 
+  LayoutDashboard, ShieldCheck, ShoppingBag, Users, Map, LogOut 
+} from "lucide-react";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [userData, setUserData] = useState(null);
+  
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // 1. Détection dynamique de l'utilisateur (Admin ou Client)
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        setUserData(parsed);
+        // Debug pour confirmer le rôle dans la console (F12)
+        console.log("Navbar Status:", parsed.role);
+      } catch (e) {
+        console.error("Erreur de lecture session", e);
+      }
+    } else {
+      setUserData(null);
+    }
+  }, [location]); // Se relance à chaque changement de page
+
+  const isLoggedIn = !!userData;
+  const isAdmin = userData?.role?.toLowerCase() === "admin";
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUserData(null);
+    window.location.href = "/login"; // Force le clean complet
+  };
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
+    const handleScroll = () => setScrolled(window.scrollY > 30);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) setIsOpen(false);
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  // Liens standards
+  const navLinks = [
+    { name: "Accueil", path: "/" },
+    { name: "Catalogue", path: "/catalogue" },
+  ];
 
-  const closeMobileMenu = () => setIsOpen(false);
-  const toggleMobileMenu = () => setIsOpen((open) => !open);
-
-  const linkStyle =
-    "relative py-1.5 font-medium text-gray-800 transition duration-500 hover:text-green-700 group";
-
-  const activeIndicatorStyle =
-    "absolute bottom-0 left-0 h-0.5 rounded-full bg-green-700 transition-all duration-500 ease-out";
+  // Lien spécifique Client
+  const clientLinks = [...navLinks];
+  if (isLoggedIn && !isAdmin) {
+    clientLinks.push({ name: "Mes Plans", path: "/mes-plans" });
+  }
 
   return (
-    <nav
-      className={`fixed z-50 w-full transition-all duration-500 ${
-        scrolled
-          ? "border-b border-gray-100 bg-white/80 shadow-lg backdrop-blur-xl"
-          : "bg-white/60 backdrop-blur-lg"
-      }`}
-    >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
+    <nav className={`fixed z-50 w-full transition-all duration-500 ${
+      scrolled ? "border-b border-gray-100 bg-white/95 shadow-md backdrop-blur-md" : "bg-white/70 backdrop-blur-sm"
+    }`}>
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         
-        {/* Logo */}
-        <Link to="/" className="z-50 flex items-center space-x-3.5">
-          <img
-            src="/logo.png"
-            alt="PlanMaison Logo"
-            className={`transition-all duration-500 ${
-              scrolled ? "h-9" : "h-10"
-            }`}
-          />
-          <span className="text-2xl font-semibold text-gray-950">
-            Plan<span className="font-extrabold text-[#D4AF37]">Maison</span>
+        {/* --- LOGO --- */}
+        <Link to="/" className="z-50 flex items-center space-x-2">
+          <img src="/logo.png" alt="Logo" className="h-9" />
+          <span className="text-2xl font-bold text-gray-950 tracking-tight">
+            Plan<span className="text-[#D4AF37]">Maison</span>
           </span>
         </Link>
 
-        {/* Desktop */}
-        <div className="hidden items-center space-x-10 md:flex">
-          <ul className="flex items-center space-x-10">
-            {navLinks.map((link) => {
-              const isActive = location.pathname === link.path;
+        {/* --- DESKTOP MENU --- */}
+        <div className="hidden items-center space-x-8 md:flex">
+          <ul className="flex items-center space-x-6">
+            {(isAdmin ? navLinks : clientLinks).map((link) => (
+              <li key={link.name}>
+                <Link to={link.path} className={`text-sm font-semibold transition-colors hover:text-green-700 ${
+                  location.pathname === link.path ? "text-green-700 underline underline-offset-8" : "text-gray-700"
+                }`}>
+                  {link.name}
+                </Link>
+              </li>
+            ))}
 
-              return (
-                <li key={link.name} className="relative group">
-                  <Link
-                    to={link.path}
-                    className={`${linkStyle} ${
-                      isActive ? "text-green-700 font-semibold" : ""
-                    }`}
-                  >
-                    {link.name}
-                    <span
-                      className={`${activeIndicatorStyle} ${
-                        isActive ? "w-full" : "w-0 group-hover:w-full"
-                      }`}
-                    />
-                  </Link>
-                </li>
-              );
-            })}
+            {/* --- BLOC ADMINISTRATION --- */}
+            {isAdmin && (
+              <div className="flex items-center gap-4 bg-gray-900 text-white rounded-full px-5 py-2 ml-4 shadow-lg scale-95 hover:scale-100 transition-transform">
+                <ShieldCheck size={14} className="text-green-400" />
+                <Link to="/admin/dashboard" className="text-[10px] font-black hover:text-green-400 transition">DASHBOARD</Link>
+                <Link to="/admin/plans" className="text-[10px] font-black hover:text-green-400 transition">PLANS</Link>
+                <Link to="/admin/orders" className="text-[10px] font-black hover:text-green-400 transition">ORDERS</Link>
+                <Link to="/admin/users" className="text-[10px] font-black hover:text-green-400 transition">USERS</Link>
+              </div>
+            )}
           </ul>
 
-          {/* Compte */}
-          <Link
-            to="/login"
-            className="rounded-full p-2 text-gray-600 hover:bg-green-50 hover:text-green-700 transition"
-          >
-            <User size={22} />
-          </Link>
+          {/* ACTIONS & COMPTE */}
+          <div className="flex items-center gap-4 border-l pl-6 border-gray-200">
+            {isLoggedIn ? (
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="text-xs font-bold text-gray-900">{userData.firstName}</p>
+                  <p className="text-[10px] text-green-700 font-black uppercase tracking-tighter">{userData.role}</p>
+                </div>
+                <button onClick={handleLogout} className="p-2 text-gray-400 hover:text-red-600 transition">
+                  <LogOut size={18} />
+                </button>
+              </div>
+            ) : (
+              <Link to="/login" className="p-2 text-gray-600 hover:text-green-700 transition">
+                <User size={20} />
+              </Link>
+            )}
 
-          {/* CTA */}
-          <Link
-            to="/sur-mesure"
-            className="flex items-center gap-2 rounded-full bg-green-700 px-7 py-3 font-semibold text-white shadow-md hover:bg-green-600 transition"
-          >
-            Demander un plan
-            <ArrowRight size={16} />
-          </Link>
+            <Link to="/sur-mesure" className="bg-green-700 text-white px-5 py-2.5 rounded-full text-xs font-bold hover:bg-green-800 transition shadow-sm">
+              Demander un plan
+            </Link>
+          </div>
         </div>
 
-        {/* Mobile button */}
-        <button
-          className="z-50 rounded-full bg-gray-100 p-2.5 text-gray-950 md:hidden"
-          onClick={toggleMobileMenu}
-        >
-          {isOpen ? <X size={26} /> : <Menu size={26} />}
+        {/* --- MOBILE TOGGLE --- */}
+        <button className="z-50 md:hidden p-2 text-gray-950" onClick={() => setIsOpen(!isOpen)}>
+          {isOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
       </div>
 
-      {/* Overlay */}
-      <div
-        className={`fixed inset-0 z-40 md:hidden ${
-          isOpen ? "visible opacity-100" : "invisible opacity-0"
-        }`}
-        onClick={closeMobileMenu}
-      >
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      </div>
-
-      {/* Mobile Menu */}
-      <div
-        className={`fixed right-0 top-0 z-50 h-screen w-full max-w-sm transform bg-white shadow-2xl transition-transform md:hidden ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        <div className="flex flex-col space-y-8 p-10 pt-28">
-
-          <Link to="/" onClick={closeMobileMenu} className="flex items-center space-x-3">
-            <img src="/logo.png" className="h-10" />
-            <span className="text-2xl font-semibold">
-              Plan<span className="text-[#D4AF37] font-bold">Maison</span>
-            </span>
-          </Link>
-
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.path}
-              onClick={closeMobileMenu}
-              className={`text-2xl font-bold ${
-                location.pathname === link.path
-                  ? "text-green-700"
-                  : "text-gray-900"
-              }`}
-            >
+      {/* --- MOBILE OVERLAY MENU --- */}
+      <div className={`fixed inset-0 z-40 bg-white transform transition-transform duration-500 ease-in-out md:hidden ${
+        isOpen ? "translate-x-0" : "translate-x-full"
+      }`}>
+        <div className="flex flex-col h-full p-10 pt-28 space-y-8">
+          {(isAdmin ? navLinks : clientLinks).map((link) => (
+            <Link key={link.name} to={link.path} onClick={() => setIsOpen(false)} className="text-3xl font-black text-gray-900 uppercase">
               {link.name}
             </Link>
           ))}
 
-          <Link
-            to="/login"
-            className="flex items-center gap-3 text-lg hover:text-green-700"
-          >
-            <User size={22} />
-            Mon compte
-          </Link>
+          {isAdmin && (
+            <div className="pt-8 border-t border-gray-100 flex flex-col space-y-5">
+              <p className="text-xs font-black text-green-700 uppercase tracking-[0.2em]">Administration</p>
+              <Link to="/admin/dashboard" onClick={() => setIsOpen(false)} className="text-xl font-bold flex items-center gap-3 text-gray-800"><LayoutDashboard size={20}/> Dashboard</Link>
+              <Link to="/admin/plans" onClick={() => setIsOpen(false)} className="text-xl font-bold flex items-center gap-3 text-gray-800"><Map size={20}/> Gestion Plans</Link>
+              <Link to="/admin/orders" onClick={() => setIsOpen(false)} className="text-xl font-bold flex items-center gap-3 text-gray-800"><ShoppingBag size={20}/> Commandes</Link>
+              <Link to="/admin/users" onClick={() => setIsOpen(false)} className="text-xl font-bold flex items-center gap-3 text-gray-800"><Users size={20}/> Utilisateurs</Link>
+            </div>
+          )}
 
-          <Link
-            to="/sur-mesure"
-            className="mt-10 flex justify-center gap-2 rounded-full bg-green-700 px-8 py-4 text-white font-semibold hover:bg-green-600"
-          >
-            Demander mon plan
-            <ArrowRight size={18} />
-          </Link>
+          <div className="mt-auto">
+            {isLoggedIn ? (
+              <button onClick={handleLogout} className="flex items-center gap-3 text-red-600 font-black text-xl uppercase italic">
+                <LogOut size={24} /> Déconnexion
+              </button>
+            ) : (
+              <Link to="/login" onClick={() => setIsOpen(false)} className="flex items-center gap-3 font-black text-xl text-gray-900 uppercase">
+                <User size={24} /> Connexion
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </nav>

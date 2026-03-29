@@ -1,87 +1,39 @@
+// server.js
+require("dotenv").config();
 const express = require("express");
-const cors = require("cors");
+const connectDB = require("./config/config.db");
+const planRoutes = require("./routes/route.plan");
+const userRoutes = require("./routes/route.user"); 
+const orderRoutes = require("./routes/route.order");
 const path = require("path");
-const { file } = require("pdfkit");
+const cors = require("cors");
 
+// Initialisation de l'application Express
 const app = express();
-const PORT = 5000;
 
-// 🔧 Middleware
-app.use(cors());
+// Middleware pour parser le JSON (Placer avant les routes)
 app.use(express.json());
 
-// 📂 Rendre accessible le dossier storage
+// Configuration CORS
+app.use(cors({
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"] // Ajout de Authorization pour le futur JWT
+}));
+
+// Servir les fichiers statiques
 app.use("/storage", express.static(path.join(__dirname, "storage")));
 
-// 🧠 Fake data (simulation base de données)
-const plans = [
-  {
-    id: 1,
-    name: "Villa Moderne F4",
-    price: 450000,
-    surface: "150 m²",
-    dimensions: "10m x 15m",
-    images: [
-        "http://localhost:5000/storage/plan1/image_0.png",
-        "http://localhost:5000/storage/plan1/image_1.png",
-        "http://localhost:5000/storage/plan1/image_2.png",
-        "http://localhost:5000/storage/plan1/image_3.png"
-    ],
-    files: "http://localhost:5000/storage/plan1/plan.zip",
-  },
-  {
-    id: 2,
-    name: "Duplex Standing F5",
-    price: 650000,
-    surface: "220 m²",
-    dimensions: "15m x 20m",
-    images: [
-        "http://localhost:5000/storage/plan1/image_0.png",
-        "http://localhost:5000/storage/plan1/image_1.png",
-        "http://localhost:5000/storage/plan1/image_2.png",
-        "http://localhost:5000/storage/plan1/image_3.png"
-    ],
-    files: "http://localhost:5000/storage/plan2/plan.zip",
-  },
-  {
-    id: 3,
-    name: "Studio Compact Éco",
-    price: 250000,
-    surface: "45 m²",
-    dimensions: "8m x 12m",
-    images: [
-        "http://localhost:5000/storage/plan1/image_0.png",
-        "http://localhost:5000/storage/plan1/image_1.png",
-        "http://localhost:5000/storage/plan1/image_2.png",
-        "http://localhost:5000/storage/plan1/image_3.png"
-    ],
-    files: "http://localhost:5000/storage/plan3/plan.zip",
-  },
-];
+// Connexion DB pour MongoDB Atlas
+connectDB();
 
-// 🔥 ROUTE ACCUEIL
-app.get("/", (req, res) => {
-  res.send("🚀 API PlanMaison fonctionne");
-});
+// --- Définition des Routes ---
+app.use("/plans", planRoutes);
+app.use("/users", userRoutes);
+app.use("/orders", orderRoutes);
 
-// 🔥 GET ALL PLANS
-app.get("/plans", (req, res) => {
-  res.json(plans);
-});
-
-// 🔥 GET PLAN BY ID
-app.get("/plans/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  const plan = plans.find((p) => p.id === id);
-
-  if (!plan) {
-    return res.status(404).json({ message: "Plan introuvable" });
-  }
-
-  res.json(plan);
-});
-
-// 🚀 Lancer serveur
+// Lancement serveur
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
 });
