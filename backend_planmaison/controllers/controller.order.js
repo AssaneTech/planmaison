@@ -1,114 +1,272 @@
-const Order = require('../models/model.order');
-const Plan = require('../models/model.plan');
-const User = require('../models/model.user');
-const bcrypt = require('bcryptjs'); // Pour hasher le mot de passe généré
-const crypto = require('crypto');   // Pour générer un mot de passe aléatoire
+const bcrypt = require("bcrypt");
+const crypto = require("crypto");
+const path = require("path");
 
-// 1. Route pour vérifier l'existence d'un email (Appelée par le Frontend)
-exports.checkEmail = async (req, res) => {
+const User = require("../models/model.user");
+const Order = require("../models/model.order");
+
+const { generateFullProjectPdf } = require("../utils/generatePdf");
+const sendEmail = require("../utils/utils.sendEmail");
+
+/**
+ * FINALISER UNE COMMANDE
+ */
+const processFinalOrder = async (req, res) => {
   try {
-    const { email } = req.query;
-    const user = await User.findOne({ email });
-    res.json({ exists: !!user });
-  } catch (err) {
-    res.status(500).json({ error: "Erreur lors de la vérification de l'email" });
-  }
-};
+    const { plan, client } = req.body;
 
-// 2. Création de la commande (Gère aussi la création de compte)
-exports.createOrder = async (req, res) => {
-  try {
-    const { planId, paymentMethod, client } = req.body; 
-    // client contient { nom, email, telephone } envoyé par le frontend
+    // --- 1. VALIDATION ---
+    if (!plan || !plan._id || !client || !client.email) {
+      return res.status(400).json({
+        error: "Données invalides (plan ou client manquant)."
+      });
+    }
 
-    // 1. Vérifier si le plan existe
-    const plan = await Plan.findById(planId);
-    if (!plan) return res.status(404).json({ msg: "Plan non trouvé" });
+    const clientEmail = client.email.toLowerCase().trim();
 
-    // 2. Gérer l'utilisateur (Récupérer ou Créer)
-    let user = await User.findOne({ email: client.email });
+    // --- 2. GESTION UTILISATEUR (ANTI-DOUBLON) ---
+    let user = await User.findOne({ email: clientEmail });
+    let tempPassword = "";
     let isNewUser = false;
-    let generatedPassword = null;
 
     if (!user) {
       isNewUser = true;
-      // Générer un mot de passe aléatoire de 8 caractères
-      generatedPassword = crypto.randomBytes(4).toString('hex').toUpperCase(); 
-      
-      // Hasher le mot de passe
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(generatedPassword, salt);
 
-      // Créer le nouvel utilisateur
-      user = new User({
-        nom: client.nom,
-        email: client.email,
-        telephone: client.telephone,
+      tempPassword = crypto.randomBytes(4).toString("hex");
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+      user = await User.create({
+        firstName: client.nom || "Client",
+        lastName: "BAOLMAX",
+        email: clientEmail,
+        phone: client.telephone,
         password: hashedPassword,
-        role: 'client'
+        role: "client"
       });
-      await user.save();
+
+      console.log("👤 Nouveau user créé :", clientEmail);
+    } else {
+      console.log("👤 User existant :", clientEmail);
     }
 
-    // 3. Créer la commande initiale (en attente)
-    const newOrder = new Order({
-      user: user._id,
-      plan: planId,
+    const userId = user._id;
+
+    // --- 3. RÉFÉRENCE UNIQUE ---
+    const orderRef = `PM-${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 6)
+      .toUpperCase()}`;
+
+    // --- 4. GÉNÉRATION PDF ---
+    const pdfPayload = {
+      ...plan,
+      client: (client.nom || "CLIENT").toUpperCase(),
+      ref: orderRef,
+      designer: {
+        name: "M. Assane DIOUF",
+        title: "Ingénieur Génie Civil",
+        address: "Mbour, Sénégal",
+        phones: "77 348 69 30",
+        email: "assanediouf0063@gmail.com"
+      },
+      rccm: "SN.MBR.2024.A.2346",
+      ninea: "011505346"
+    };
+
+    const generatedPdfPath = await generateFullProjectPdf(pdfPayload);
+
+    if (!generatedPdfPath) {
+      throw new Error("Erreur génération PDF");
+    }
+
+    const fileName = path.basename(generatedPdfPath);
+    const downloadUrl = `/storage/generated/${fileName}`;
+
+    console.log("📄 PDF généré :", fileName);
+
+    // --- 5. ENREGISTRER COMMANDE ---
+    const newOrder = await Order.create({
+      user: userId,
+      plan: plan._id,
       amount: plan.price,
-      paymentMethod,
-      status: 'pending'
+      orderReference: orderRef,
+      downloadUrl,
+      status: "Completed"
     });
 
-    const savedOrder = await newOrder.save();
+    console.log("📦 Commande enregistrée :", orderRef);
 
-    // 4. Réponse au frontend
-    // On renvoie l'ID de la commande et si c'est un nouveau client
-    // (Le mot de passe ne sera envoyé QUE par mail après paiement réussi)
+    // --- 6. EMAIL ---
+    const absolutePdfPath = path.resolve(
+      __dirname,
+      "..",
+      "storage",
+      "generated",
+      fileName
+    );
+
+    const welcomeHtml = isNewUser
+      ? `
+        <p><b>Bienvenue chez BAOLMAX</b></p>
+        <p>Email : ${clientEmail}</p>
+        <p>Mot de passe : <b style="color:red">${tempPassword}</b></p>
+      `
+      : `<p>Ravi de vous revoir sur BAOLMAX 👷‍♂️</p>`;
+
+    try {
+      await sendEmail({
+        to: clientEmail,
+        subject: `Dossier Technique - ${plan.name} (${orderRef})`,
+        html: `
+          <div style="font-family:Arial;padding:20px">
+            <h2 style="color:#00853f">BAOLMAX PlanMaison</h2>
+            <p>Bonjour <b>${client.nom}</b>,</p>
+            ${welcomeHtml}
+            <p>Votre dossier est en pièce jointe.</p>
+            <p><b>Référence :</b> ${orderRef}</p>
+          </div>
+        `,
+        attachments: [
+          {
+            filename: `BAOLMAX_${orderRef}.pdf`,
+            path: absolutePdfPath
+          }
+        ]
+      });
+
+      console.log("📧 Email envoyé :", clientEmail);
+    } catch (err) {
+      console.error("⚠️ Email échoué :", err.message);
+    }
+
+    // --- 7. RÉPONSE ---
     res.status(201).json({
       success: true,
-      orderId: savedOrder._id,
-      isNewUser,
-      tempPass: isNewUser ? generatedPassword : null // À utiliser pour le mail final
+      message: "Commande finalisée avec succès",
+      downloadUrl
     });
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erreur lors du processus de commande" });
+  } catch (error) {
+    console.error("❌ ERREUR FINAL ORDER :", error);
+
+    res.status(500).json({
+      error: "Erreur serveur",
+      details: error.message
+    });
   }
 };
 
-// 3. Valider la commande et débloquer le plan
-exports.verifyPayment = async (req, res) => {
+/**
+ * HISTORIQUE DES COMMANDES
+ */
+const getUserOrders = async (req, res) => {
   try {
-    const { orderId, transactionId, tempPass } = req.body;
+    const { userId } = req.params;
 
-    const order = await Order.findById(orderId).populate('plan').populate('user');
-    if (!order) return res.status(404).json({ msg: "Commande introuvable" });
+    const orders = await Order.find({ user: userId })
+      .populate("plan")
+      .sort({ createdAt: -1 });
 
-    // Mise à jour de la commande
-    order.status = 'completed';
-    order.transactionId = transactionId;
-    await order.save();
-
-    // Ajouter le plan à la liste des achats de l'utilisateur
-    await User.findByIdAndUpdate(order.user._id, {
-      $addToSet: { purchasedPlans: order.plan._id }
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("❌ Erreur getUserOrders :", error);
+    res.status(500).json({
+      error: "Impossible de récupérer les commandes"
     });
+  }
+};
 
-    // --- ICI : APPEL À VOTRE SERVICE D'EMAIL ---
-    // Envoi du mail avec : 
-    // - Le fichier PDF du plan
-    // - Si tempPass existe : "Voici vos accès : Email + tempPass"
-    // - Sinon : "Merci pour votre fidélité, votre plan est dispo dans votre espace"
-    // sendPurchaseEmail(order.user.email, order.plan, tempPass);
+//getAllOrders
+const getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate("user", "firstName lastName email")
+      .populate("plan", "name")
+      .sort({ createdAt: -1 });
 
-    res.json({ 
-      success: true, 
-      msg: "Paiement validé !", 
-      order 
-    });
+    res.status(200).json(orders);
 
   } catch (err) {
-    res.status(500).json({ error: "Erreur lors de la validation du paiement" });
+    console.error("Erreur getAllOrders:", err);
+    res.status(500).json({ error: "Erreur serveur" });
   }
+};
+
+//creer une commande
+const createOrder = async (req, res) => {
+  try {
+    const { userId, planId, amount, status } = req.body;
+
+    if (!userId || !planId || !amount) {
+      return res.status(400).json({ error: "Champs manquants" });
+    }
+
+    const orderRef = `PM-${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 6)
+      .toUpperCase()}`;
+
+    const newOrder = await Order.create({
+      user: userId,
+      plan: planId,
+      amount,
+      status: status || "Completed",
+      orderReference: orderRef
+    });
+
+    res.status(201).json(newOrder);
+
+  } catch (err) {
+    console.error("Erreur createOrder:", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+};
+
+//update une commande
+const updateOrder = async (req, res) => {
+  try {
+    const { status, amount } = req.body;
+
+    const updatedOrder = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status, amount },
+      { new: true }
+    );
+
+    if (!updatedOrder) {
+      return res.status(404).json({ error: "Commande introuvable" });
+    }
+
+    res.status(200).json(updatedOrder);
+
+  } catch (err) {
+    console.error("Erreur updateOrder:", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+};
+
+//delete une commande
+const deleteOrder = async (req, res) => {
+  try {
+    const deleted = await Order.findByIdAndDelete(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({ error: "Commande introuvable" });
+    }
+
+    res.status(200).json({ message: "Commande supprimée" });
+
+  } catch (err) {
+    console.error("Erreur deleteOrder:", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+};
+
+module.exports = {
+  processFinalOrder,
+  getUserOrders,
+  getAllOrders,
+  createOrder,
+  updateOrder,
+  deleteOrder
 };

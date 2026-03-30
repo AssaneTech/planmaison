@@ -1,6 +1,6 @@
-//utils.sendEmail.js
 const nodemailer = require('nodemailer');
-const sendEmail = async (to, subject, text) => {
+
+const sendEmail = async (options) => { // Reçoit un objet {to, subject, html, attachments}
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -8,11 +8,13 @@ const sendEmail = async (to, subject, text) => {
       pass: process.env.EMAIL_PASS
     }
   });
+
   await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to,
-    subject,
-    text
+    from: `"BAOLMAX" <${process.env.EMAIL_USER}>`,
+    to: options.to,
+    subject: options.subject,
+    html: options.html,
+    attachments: options.attachments || []
   });
 };
 

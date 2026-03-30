@@ -1,11 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FaFacebookF, FaInstagram, FaLinkedinIn } from "react-icons/fa";
+import { FaFacebookF, FaInstagram, FaLinkedinIn, FaChevronRight } from "react-icons/fa";
 
 const footerLinks = [
-  { name: "Catalogue", path: "/catalogue" },
+  { name: "Le Catalogue", path: "/catalogue" },
   { name: "Plan sur mesure", path: "/sur-mesure" },
-  { name: "Mon compte", path: "/login" },
+  { name: "Espace Client", path: "/login" },
   { name: "Mentions légales", path: "/mentions-legales" },
   { name: "Confidentialité", path: "/confidentialite" },
 ];
@@ -16,86 +16,108 @@ const socialLinks = [
   { icon: FaLinkedinIn, path: "#" },
 ];
 
-const linkStyle =
-  "relative transition duration-500 hover:text-green-700 group text-sm font-medium";
-
-const activeIndicatorStyle =
-  "h-0.5 bg-green-700 absolute bottom-0 left-0 w-0 group-hover:w-full rounded-full transition-all duration-500";
-
 const FooterChic = () => {
   return (
-    <footer className="bg-gray-50 border-t border-gray-100 text-gray-600 mt-24">
-      
-      {/* MAIN */}
-      <div className="max-w-7xl mx-auto px-8 py-20 grid grid-cols-1 md:grid-cols-3 gap-16 items-start text-center md:text-left">
-        
-        {/* LEFT */}
-        <div className="flex flex-col items-center md:items-start max-w-sm mx-auto md:mx-0">
-          <Link to="/" className="flex items-center space-x-3 mb-6">
-            <img src="/logo.png" alt="Logo" className="h-12" />
-            <span className="text-2xl font-semibold text-gray-950">
-              Plan<span className="text-[#D4AF37] font-extrabold">Maison</span>
-            </span>
-          </Link>
+    <footer className="relative bg-white pt-28 overflow-hidden">
+      {/* Ligne décorative supérieure */}
+      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
 
-          <p className="text-sm text-gray-600 font-light leading-relaxed">
-            Des plans architecturaux modernes, conformes aux normes sénégalaises,
-            prêts pour votre autorisation de construire.
-          </p>
-        </div>
+      <div className="max-w-7xl mx-auto px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 pb-20">
+          
+          {/* SECTION GAUCHE : BRANDING (5 COL) */}
+          <div className="lg:col-span-5 flex flex-col items-start space-y-8">
+            <Link to="/" className="group flex items-center gap-4 transition-transform duration-500 hover:scale-105">
+              <div className="relative">
+                <div className="absolute -inset-2 bg-emerald-50 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <img src="/logo.png" alt="Logo" className="relative h-14 w-auto object-contain" />
+              </div>
+              <span className="text-3xl font-light tracking-tighter text-gray-900 uppercase">
+                Plan<span className="font-black text-emerald-700 italic">Maison</span>
+              </span>
+            </Link>
+            
+            <p className="text-lg text-gray-400 font-light leading-relaxed max-w-sm">
+              L'art de concevoir l'habitat <span className="text-gray-900 font-medium">Sénégalais</span>. 
+              Des plans d'exception pour des projets de vie uniques.
+            </p>
 
-        {/* CENTER */}
-        <div className="flex flex-col items-center">
-          <h3 className="text-lg font-bold text-gray-950 mb-6">
-            Liens utiles
-          </h3>
-
-          <ul className="space-y-4">
-            {footerLinks.map((link) => (
-              <li key={link.name} className="relative group">
-                <Link to={link.path} className={linkStyle}>
-                  {link.name}
-                  <span className={activeIndicatorStyle}></span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* RIGHT */}
-        <div className="flex flex-col items-center md:items-start max-w-sm mx-auto md:mx-0">
-          <h3 className="text-lg font-bold text-gray-950 mb-6">
-            Suivez-nous
-          </h3>
-
-          <div className="flex space-x-4 mb-6">
-            {socialLinks.map((social, index) => (
-              <a
-                key={index}
-                href={social.path}
-                className="p-3 rounded-full bg-gray-100 text-gray-600 
-                hover:bg-green-50 hover:text-green-700 transition shadow hover:-translate-y-1"
-              >
-                <social.icon size={18} />
-              </a>
-            ))}
+            <div className="flex gap-4">
+              {socialLinks.map((social, index) => (
+                <a
+                  key={index}
+                  href={social.path}
+                  className="w-12 h-12 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-black hover:text-white hover:-translate-y-2 transition-all duration-500 shadow-sm"
+                >
+                  <social.icon size={18} />
+                </a>
+              ))}
+            </div>
           </div>
 
-          <p className="text-sm text-gray-600 font-light">
-            Conseils, tendances et nouveautés pour réussir votre projet de construction.
-          </p>
-        </div>
-      </div>
+          {/* SECTION CENTRE : NAVIGATION (3 COL) */}
+          <div className="lg:col-span-3">
+            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-300 mb-10">Exploration</h4>
+            <ul className="space-y-5">
+              {footerLinks.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    to={link.path}
+                    className="group flex items-center text-sm font-medium text-gray-500 hover:text-emerald-700 transition-colors"
+                  >
+                    <FaChevronRight size={8} className="mr-0 opacity-0 group-hover:mr-3 group-hover:opacity-100 transition-all duration-300 text-emerald-500" />
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-      {/* BOTTOM */}
-      <div className="border-t border-gray-100 bg-white">
-        <div className="max-w-7xl mx-auto px-8 py-6 flex flex-col md:flex-row justify-between items-center text-xs text-gray-400 gap-4">
-          <p>
-            © 2026 <span className="text-green-700 font-semibold">PlanMaison.sn</span> — Tous droits réservés
-          </p>
-          <p className="text-[#D4AF37] font-medium">
-            Plans livrés en PDF haute définition
-          </p>
+          {/* SECTION DROITE : CONTACT/NEWS (4 COL) */}
+          <div className="lg:col-span-4 flex flex-col space-y-10">
+            <div>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-300 mb-8">Contact Privé</h4>
+              <p className="text-sm font-bold text-gray-900 underline underline-offset-8 decoration-emerald-200 hover:decoration-emerald-500 transition-all cursor-pointer">
+                contact@planmaison.sn
+              </p>
+            </div>
+
+            <div className="p-8 rounded-[2.5rem] bg-emerald-950 text-white relative overflow-hidden group">
+              <div className="absolute -right-4 -top-4 w-24 h-24 bg-emerald-800 rounded-full blur-3xl group-hover:bg-emerald-600 transition-colors"></div>
+              <h5 className="relative text-xs font-black uppercase tracking-widest text-emerald-400 mb-3">Newsletter</h5>
+              <p className="relative text-sm font-light text-emerald-100/80 mb-6">Recevez nos dernières conceptions 3D avant tout le monde.</p>
+              <div className="relative flex border-b border-emerald-800 pb-2">
+                <input 
+                  type="email" 
+                  placeholder="Votre email..." 
+                  className="bg-transparent border-none text-sm w-full focus:ring-0 placeholder:text-emerald-800"
+                />
+                <button className="text-emerald-400 hover:text-white transition-colors">
+                   <FaChevronRight />
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* BOTTOM SECTION */}
+        <div className="py-10 border-t border-gray-50 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-6">
+             <span className="text-[10px] font-bold uppercase tracking-widest text-gray-300">© 2026 PlanMaison S.N.R.L</span>
+             <div className="h-1 w-1 bg-gray-200 rounded-full"></div>
+             <span className="text-[10px] font-medium text-gray-400 italic">By Assane Diouf</span>
+          </div>
+
+          <div className="flex items-center gap-8">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">
+              Haute Définition PDF
+            </p>
+            <div className="flex gap-2">
+               <div className="w-8 h-[2px] bg-emerald-600"></div>
+               <div className="w-4 h-[2px] bg-[#D4AF37]"></div>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

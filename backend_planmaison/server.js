@@ -5,6 +5,8 @@ const connectDB = require("./config/config.db");
 const planRoutes = require("./routes/route.plan");
 const userRoutes = require("./routes/route.user"); 
 const orderRoutes = require("./routes/route.order");
+const customRequestRoutes = require("./routes/route.CustomRequest");
+
 const path = require("path");
 const cors = require("cors");
 
@@ -24,6 +26,7 @@ app.use(cors({
 // Servir les fichiers statiques
 app.use("/storage", express.static(path.join(__dirname, "storage")));
 
+
 // Connexion DB pour MongoDB Atlas
 connectDB();
 
@@ -31,6 +34,7 @@ connectDB();
 app.use("/plans", planRoutes);
 app.use("/users", userRoutes);
 app.use("/orders", orderRoutes);
+app.use("/customrequests", customRequestRoutes);
 
 // Lancement serveur
 const PORT = process.env.PORT || 5000;

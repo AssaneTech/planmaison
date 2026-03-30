@@ -20,6 +20,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import Orders from "./pages/admin/Orders";
 import Plans from "./pages/admin/Plans";
 import Users from "./pages/admin/Users";
+import Requests from "./pages/admin/Requests";
 
 
 function App() {
@@ -47,6 +48,7 @@ function App() {
             <Route path="/admin/orders" element={<Orders />} />
             <Route path="/admin/plans" element={<Plans />} />
             <Route path="/admin/users" element={<Users />} />
+            <Route path="/admin/requests" element={<Requests />} />
           </Routes>
         </main>
         <Footer/>
