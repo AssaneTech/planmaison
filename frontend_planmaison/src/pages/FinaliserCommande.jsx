@@ -12,8 +12,9 @@ import {
   Smartphone
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
+import dotenv from "dotenv";
 
-const API_URL = "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const FinaliserCommande = () => {
   const navigate = useNavigate();

@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL; // ✅ même logique que Catalogue
+
 const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -20,14 +22,14 @@ const Login = () => {
     setError("");
 
     try {
-      const res = await axios.post("http://localhost:5000/users/login", formData);
-      
-      console.log("Réponse serveur :", res.data); // <--- AJOUTE CECI POUR DEBOGUER
+      const res = await axios.post(`${API_URL}/users/login`, formData); // ✅ modifié
+
+      console.log("Réponse serveur :", res.data);
 
       if (res.data.user) {
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("user", JSON.stringify(res.data.user));
-        navigate("/"); 
+        navigate("/");
       }
     } catch (err) {
       setError(err.response?.data?.msg || "Erreur de connexion au serveur");
@@ -47,37 +49,67 @@ const Login = () => {
           </h1>
         </div>
 
-        {error && <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 text-center">{error}</div>}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 text-center">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">Email</label>
-            <input type="email" name="email" placeholder="exemple@email.com" value={formData.email} onChange={handleChange} required
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-green-200 outline-none transition" />
+            <input
+              type="email"
+              name="email"
+              placeholder="exemple@email.com"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-green-200 outline-none transition"
+            />
           </div>
 
           <div className="flex flex-col gap-1">
             <div className="flex justify-between">
               <label className="text-sm font-medium text-gray-700">Mot de passe</label>
-              <Link to="/mot-de-passe-oublie" className="text-sm text-green-700 hover:underline">Oublié ?</Link>
+              <Link to="/mot-de-passe-oublie" className="text-sm text-green-700 hover:underline">
+                Oublié ?
+              </Link>
             </div>
             <div className="relative">
-              <input type={showPassword ? "text" : "password"} name="password" placeholder="********" value={formData.password} onChange={handleChange} required
-                className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-green-200 outline-none transition" />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="********"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-green-200 outline-none transition"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+              >
                 {showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
               </button>
             </div>
           </div>
 
-          <button type="submit" disabled={loading}
-            className="w-full bg-green-700 text-white py-3 rounded-lg font-semibold hover:bg-green-800 transition shadow-md shadow-green-100">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-green-700 text-white py-3 rounded-lg font-semibold hover:bg-green-800 transition shadow-md shadow-green-100"
+          >
             {loading ? "Connexion en cours..." : "Se connecter"}
           </button>
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-600">
-          Pas de compte ? <Link to="/register" className="text-green-700 font-bold hover:underline">S'inscrire</Link>
+          Pas de compte ?{" "}
+          <Link to="/register" className="text-green-700 font-bold hover:underline">
+            S'inscrire
+          </Link>
         </div>
       </div>
     </div>

@@ -4,7 +4,8 @@ import {
   Search, Loader2, MapPin, RefreshCw, Trash2, Edit3, X, Save, UserPlus 
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/users"; // Vérifie bien ce chemin
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Users = () => {
   const [users, setUsers] = useState([]);

@@ -9,7 +9,6 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import VoirDetails from "./pages/VoirDetails";
 import FinaliserCommande from "./pages/FinaliserCommande";
-import CommandeSucces from "./pages/CommandeSucces";
 import MesPlans from "./pages/MesPlans";
 
 //Admin importations
@@ -34,7 +33,6 @@ function App() {
             <Route path="/register" element={<Register/>} />
             <Route path="/details/:id" element={<VoirDetails/>}/>
             <Route path="/finaliser-commande" element ={<FinaliserCommande/>}/>
-            <Route path="/commande-succes" element ={<CommandeSucces/>}/>
             <Route path="/mes-plans" element={<MesPlans />} />
 
             {/*Routes admin*/}

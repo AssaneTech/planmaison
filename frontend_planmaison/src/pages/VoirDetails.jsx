@@ -5,7 +5,7 @@ import {
   ArrowLeft, ShoppingCart, ShieldCheck, Star, Layers 
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL;
 
 /* ================= IMAGE ZOOM COMPONENT (Optimisé) ================= */
 const ImageZoom = ({ src }) => {
