@@ -6,6 +6,10 @@ const planRoutes = require("./routes/route.plan");
 const userRoutes = require("./routes/route.user"); 
 const orderRoutes = require("./routes/route.order");
 const customRequestRoutes = require("./routes/route.CustomRequest");
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://frontend-planmaison.onrender.com"
+];
 
 const path = require("path");
 const cors = require("cors");
@@ -17,10 +21,20 @@ const app = express();
 app.use(express.json());
 
 // Configuration CORS
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  origin: function (origin, callback) {
+    // autorise requêtes sans origin (Postman, mobile apps)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS non autorisé"));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"] // Ajout de Authorization pour le futur JWT
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 // Servir les fichiers statiques
