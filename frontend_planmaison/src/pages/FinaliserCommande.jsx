@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import {
-  ArrowLeft, Loader2, CheckCircle
-} from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -26,7 +24,7 @@ const FinaliserCommande = () => {
   });
 
   // =========================
-  // ❌ SI PAS DE PLAN
+  // ❌ REDIRECTION SI PAS DE PLAN
   // =========================
   useEffect(() => {
     if (!plan) {
@@ -62,9 +60,8 @@ const FinaliserCommande = () => {
       if (typeof data.exists === "boolean") {
         setEmailExists(data.exists);
       }
-
     } catch (err) {
-      console.error(err);
+      console.error("Erreur check email:", err);
     } finally {
       setCheckingEmail(false);
     }
@@ -91,14 +88,14 @@ const FinaliserCommande = () => {
     }
 
     if (!formData.paiement) {
-      return toast.error("Choisissez un paiement");
+      return toast.error("Choisissez un mode de paiement");
     }
 
     setStep(2);
   };
 
   // =========================
-  // 💳 FINALISATION
+  // 💳 FINALISATION (CORRIGÉE)
   // =========================
   const handleFinalize = async () => {
     if (!plan?._id) {
@@ -114,26 +111,36 @@ const FinaliserCommande = () => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          planId: plan._id, // ✅ IMPORTANT (pas tout le plan)
+          // ✅ CORRECTION ICI
+          plan: { _id: plan._id },
           client: formData
         })
       });
 
-      const data = await res.json();
+      const text = await res.text();
+
+      let data;
+
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        console.error("Réponse non JSON :", text);
+        throw new Error("Réponse serveur invalide");
+      }
 
       if (!res.ok) {
         throw new Error(data.error || "Erreur serveur");
       }
 
+      toast.success("Commande réussie !");
       setStep(3);
 
-      // redirection auto
       setTimeout(() => {
         navigate("/catalogue");
       }, 4000);
 
     } catch (err) {
-      console.error(err);
+      console.error("Erreur finalize:", err);
       toast.error(err.message);
     } finally {
       setLoading(false);
@@ -141,7 +148,7 @@ const FinaliserCommande = () => {
   };
 
   // =========================
-  // 🎨 UI
+  // UI
   // =========================
   return (
     <div className="min-h-screen bg-gray-50 pt-24 px-4 pb-20">
@@ -152,17 +159,14 @@ const FinaliserCommande = () => {
         {/* RETOUR */}
         {step < 3 && (
           <button
-            onClick={() => step === 1 ? navigate(-1) : setStep(1)}
+            onClick={() => (step === 1 ? navigate(-1) : setStep(1))}
             className="flex items-center gap-2 mb-6 text-gray-500 hover:text-green-600"
           >
-            <ArrowLeft size={16} />
-            {step === 1 ? "Retour" : "Modifier"}
+            <ArrowLeft size={16} /> Retour
           </button>
         )}
 
-        {/* ========================= */}
         {/* STEP 1 */}
-        {/* ========================= */}
         {step === 1 && (
           <div className="grid md:grid-cols-2 gap-10">
 
@@ -248,13 +252,10 @@ const FinaliserCommande = () => {
                 Continuer
               </button>
             </form>
-
           </div>
         )}
 
-        {/* ========================= */}
         {/* STEP 2 */}
-        {/* ========================= */}
         {step === 2 && (
           <div className="max-w-md mx-auto text-center space-y-6">
             <h2 className="text-xl font-bold">Confirmer paiement</h2>
@@ -266,14 +267,12 @@ const FinaliserCommande = () => {
               disabled={loading}
               className="w-full bg-black text-white py-4 rounded flex justify-center"
             >
-              {loading ? <Loader2 className="animate-spin" /> : "Payer"}
+              {loading ? <Loader2 className="animate-spin" /> : "Confirmer"}
             </button>
           </div>
         )}
 
-        {/* ========================= */}
         {/* STEP 3 */}
-        {/* ========================= */}
         {step === 3 && (
           <div className="text-center space-y-4">
             <CheckCircle size={60} className="mx-auto text-green-600" />
