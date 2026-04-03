@@ -1,24 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  User,
-  Mail,
-  Phone,
-  Zap,
-  CheckCircle,
-  ArrowLeft,
-  Loader2,
-  CreditCard,
-  Smartphone
+  ArrowLeft, Loader2, CheckCircle
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
-import dotenv from "dotenv";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const FinaliserCommande = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
   const plan = location.state?.plan || null;
 
   const [step, setStep] = useState(1);
@@ -33,20 +25,29 @@ const FinaliserCommande = () => {
     paiement: ""
   });
 
-  // ================================
-  // 🔍 CHECK EMAIL (DEBOUNCE + SAFE)
-  // ================================
+  // =========================
+  // ❌ SI PAS DE PLAN
+  // =========================
+  useEffect(() => {
+    if (!plan) {
+      navigate("/catalogue");
+    }
+  }, [plan, navigate]);
+
+  // =========================
+  // 🔍 CHECK EMAIL (DEBOUNCE)
+  // =========================
   useEffect(() => {
     if (!formData.email || !formData.email.includes("@")) return;
 
     const timeout = setTimeout(() => {
-      checkUserStatus(formData.email);
-    }, 600);
+      checkEmail(formData.email);
+    }, 500);
 
     return () => clearTimeout(timeout);
   }, [formData.email]);
 
-  const checkUserStatus = async (email) => {
+  const checkEmail = async (email) => {
     try {
       setCheckingEmail(true);
 
@@ -54,10 +55,7 @@ const FinaliserCommande = () => {
         `${API_URL}/users/check-email?email=${encodeURIComponent(email)}`
       );
 
-      if (!res.ok) {
-        console.error("Erreur API check-email");
-        return;
-      }
+      if (!res.ok) return;
 
       const data = await res.json();
 
@@ -66,23 +64,26 @@ const FinaliserCommande = () => {
       }
 
     } catch (err) {
-      console.error("Erreur check email:", err);
+      console.error(err);
     } finally {
       setCheckingEmail(false);
     }
   };
 
-  // ================================
-  // 📝 INPUT CHANGE
-  // ================================
+  // =========================
+  // 📝 INPUT
+  // =========================
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
   };
 
-  // ================================
+  // =========================
   // ➡️ STEP 2
-  // ================================
-  const goToPayment = (e) => {
+  // =========================
+  const goToStep2 = (e) => {
     e.preventDefault();
 
     if (!formData.nom || !formData.email || !formData.telephone) {
@@ -90,15 +91,15 @@ const FinaliserCommande = () => {
     }
 
     if (!formData.paiement) {
-      return toast.error("Choisissez un mode de paiement");
+      return toast.error("Choisissez un paiement");
     }
 
     setStep(2);
   };
 
-  // ================================
+  // =========================
   // 💳 FINALISATION
-  // ================================
+  // =========================
   const handleFinalize = async () => {
     if (!plan?._id) {
       return toast.error("Plan invalide");
@@ -113,7 +114,7 @@ const FinaliserCommande = () => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          plan,
+          planId: plan._id, // ✅ IMPORTANT (pas tout le plan)
           client: formData
         })
       });
@@ -126,88 +127,68 @@ const FinaliserCommande = () => {
 
       setStep(3);
 
+      // redirection auto
       setTimeout(() => {
-        navigate("/mes-plans");
+        navigate("/catalogue");
       }, 4000);
 
     } catch (err) {
-      console.error("Erreur complète:", err);
+      console.error(err);
       toast.error(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // ================================
-  // ❌ SI PLAN ABSENT
-  // ================================
-  if (!plan) {
-    return (
-      <div className="p-20 text-center font-bold">
-        Plan introuvable...
-      </div>
-    );
-  }
-
-  // ================================
+  // =========================
   // 🎨 UI
-  // ================================
+  // =========================
   return (
-    <div className="bg-[#F8FAFC] min-h-screen pt-32 pb-20 px-4 font-sans">
+    <div className="min-h-screen bg-gray-50 pt-24 px-4 pb-20">
       <Toaster position="top-right" />
 
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-5xl mx-auto">
 
         {/* RETOUR */}
         {step < 3 && (
           <button
-            onClick={() =>
-              step === 1 ? navigate(-1) : setStep(1)
-            }
-            className="flex items-center gap-2 text-[10px] font-black text-gray-400 hover:text-green-700 uppercase tracking-widest mb-10"
+            onClick={() => step === 1 ? navigate(-1) : setStep(1)}
+            className="flex items-center gap-2 mb-6 text-gray-500 hover:text-green-600"
           >
-            <ArrowLeft size={14} />
-            {step === 1 ? "Retour" : "Modifier mes infos"}
+            <ArrowLeft size={16} />
+            {step === 1 ? "Retour" : "Modifier"}
           </button>
         )}
 
         {/* ========================= */}
-        {/* ÉTAPE 1 */}
+        {/* STEP 1 */}
         {/* ========================= */}
         {step === 1 && (
-          <div className="grid lg:grid-cols-5 gap-12">
+          <div className="grid md:grid-cols-2 gap-10">
 
-            {/* RÉSUMÉ */}
-            <div className="lg:col-span-2">
-              <div className="bg-white p-8 rounded-[2rem] shadow-sm">
-                <img
-                  src={plan.images?.[0]}
-                  alt={plan.name}
-                  className="w-full aspect-video object-cover rounded-xl mb-6"
-                />
-                <h4 className="font-black text-lg">{plan.name}</h4>
-
-                <div className="mt-6 flex justify-between">
-                  <span>Total</span>
-                  <span className="font-bold text-green-700">
-                    {plan.price} FCFA
-                  </span>
-                </div>
-              </div>
+            {/* PLAN */}
+            <div className="bg-white p-6 rounded-2xl shadow">
+              <img
+                src={plan?.images?.[0] || "/placeholder.png"}
+                alt=""
+                className="w-full h-48 object-cover rounded-xl mb-4"
+              />
+              <h3 className="font-bold">{plan?.name}</h3>
+              <p className="text-green-600 font-bold mt-2">
+                {plan?.price} FCFA
+              </p>
             </div>
 
             {/* FORM */}
-            <form
-              onSubmit={goToPayment}
-              className="lg:col-span-3 bg-white p-8 rounded-[2rem] shadow-sm space-y-6"
-            >
+            <form onSubmit={goToStep2} className="bg-white p-6 rounded-2xl shadow space-y-4">
+
               <input
                 type="text"
                 name="nom"
                 placeholder="Nom complet"
-                required
                 onChange={handleChange}
-                className="w-full p-4 bg-gray-50 rounded-xl"
+                required
+                className="w-full p-3 border rounded"
               />
 
               <div>
@@ -215,97 +196,89 @@ const FinaliserCommande = () => {
                   type="email"
                   name="email"
                   placeholder="Email"
-                  required
                   onChange={handleChange}
-                  className="w-full p-4 bg-gray-50 rounded-xl"
+                  required
+                  className="w-full p-3 border rounded"
                 />
 
-                {/* STATUS EMAIL */}
-                {formData.email && (
-                  <p className="text-xs mt-2">
-                    {checkingEmail
-                      ? "Vérification..."
-                      : emailExists
+                <p className="text-xs mt-1 text-gray-400">
+                  {checkingEmail
+                    ? "Vérification..."
+                    : formData.email
+                    ? emailExists
                       ? "✔ Compte existant"
-                      : "➕ Nouveau client"}
-                  </p>
-                )}
+                      : "➕ Nouveau client"
+                    : ""}
+                </p>
               </div>
 
               <input
                 type="tel"
                 name="telephone"
                 placeholder="Téléphone"
-                required
                 onChange={handleChange}
-                className="w-full p-4 bg-gray-50 rounded-xl"
+                required
+                className="w-full p-3 border rounded"
               />
 
               {/* PAIEMENT */}
               <div className="grid grid-cols-3 gap-3">
-                {["wave", "orange-money", "carte"].map((m) => (
+                {["wave", "orange-money", "carte"].map((p) => (
                   <label
-                    key={m}
-                    className={`p-4 rounded-xl text-center cursor-pointer border ${
-                      formData.paiement === m
-                        ? "border-green-600 bg-green-50"
+                    key={p}
+                    className={`p-3 text-center rounded cursor-pointer border ${
+                      formData.paiement === p
+                        ? "bg-green-100 border-green-600"
                         : "bg-gray-50"
                     }`}
                   >
                     <input
                       type="radio"
                       name="paiement"
-                      value={m}
+                      value={p}
                       onChange={handleChange}
                       className="hidden"
                     />
-                    {m}
+                    {p}
                   </label>
                 ))}
               </div>
 
-              <button className="w-full bg-black text-white py-4 rounded-xl">
-                Suivant
+              <button className="w-full bg-black text-white py-3 rounded">
+                Continuer
               </button>
             </form>
+
           </div>
         )}
 
         {/* ========================= */}
-        {/* ÉTAPE 2 */}
+        {/* STEP 2 */}
         {/* ========================= */}
         {step === 2 && (
           <div className="max-w-md mx-auto text-center space-y-6">
-            <h2 className="text-xl font-bold">
-              Paiement {formData.paiement}
-            </h2>
+            <h2 className="text-xl font-bold">Confirmer paiement</h2>
 
-            <p>{plan.price} FCFA</p>
+            <p className="text-lg">{plan.price} FCFA</p>
 
             <button
               onClick={handleFinalize}
               disabled={loading}
-              className="w-full bg-black text-white py-4 rounded-xl flex justify-center"
+              className="w-full bg-black text-white py-4 rounded flex justify-center"
             >
-              {loading ? <Loader2 className="animate-spin" /> : "Confirmer"}
+              {loading ? <Loader2 className="animate-spin" /> : "Payer"}
             </button>
           </div>
         )}
 
         {/* ========================= */}
-        {/* ÉTAPE 3 */}
+        {/* STEP 3 */}
         {/* ========================= */}
         {step === 3 && (
-          <div className="text-center space-y-6">
+          <div className="text-center space-y-4">
             <CheckCircle size={60} className="mx-auto text-green-600" />
-
-            <h2 className="text-2xl font-bold">
-              Commande réussie
-            </h2>
-
-            <p>
-              Le plan a été envoyé à <b>{formData.email}</b>
-            </p>
+            <h2 className="text-2xl font-bold">Commande réussie</h2>
+            <p>Votre plan a été envoyé à {formData.email}</p>
           </div>
         )}
 
