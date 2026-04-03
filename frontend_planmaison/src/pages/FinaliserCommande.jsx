@@ -1,14 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Loader2, CheckCircle } from "lucide-react";
+import {
+  User,
+  Mail,
+  Phone,
+  Zap,
+  CheckCircle,
+  ArrowLeft,
+  Loader2,
+  CreditCard,
+  Smartphone
+} from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
+import dotenv from "dotenv";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const FinaliserCommande = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
   const plan = location.state?.plan || null;
 
   const [step, setStep] = useState(1);
@@ -23,29 +33,20 @@ const FinaliserCommande = () => {
     paiement: ""
   });
 
-  // =========================
-  // ❌ REDIRECTION SI PAS DE PLAN
-  // =========================
-  useEffect(() => {
-    if (!plan) {
-      navigate("/catalogue");
-    }
-  }, [plan, navigate]);
-
-  // =========================
-  // 🔍 CHECK EMAIL (DEBOUNCE)
-  // =========================
+  // ================================
+  // 🔍 CHECK EMAIL (DEBOUNCE + SAFE)
+  // ================================
   useEffect(() => {
     if (!formData.email || !formData.email.includes("@")) return;
 
     const timeout = setTimeout(() => {
-      checkEmail(formData.email);
-    }, 500);
+      checkUserStatus(formData.email);
+    }, 600);
 
     return () => clearTimeout(timeout);
   }, [formData.email]);
 
-  const checkEmail = async (email) => {
+  const checkUserStatus = async (email) => {
     try {
       setCheckingEmail(true);
 
@@ -53,13 +54,17 @@ const FinaliserCommande = () => {
         `${API_URL}/users/check-email?email=${encodeURIComponent(email)}`
       );
 
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error("Erreur API check-email");
+        return;
+      }
 
       const data = await res.json();
 
       if (typeof data.exists === "boolean") {
         setEmailExists(data.exists);
       }
+
     } catch (err) {
       console.error("Erreur check email:", err);
     } finally {
@@ -67,20 +72,17 @@ const FinaliserCommande = () => {
     }
   };
 
-  // =========================
-  // 📝 INPUT
-  // =========================
+  // ================================
+  // 📝 INPUT CHANGE
+  // ================================
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // =========================
+  // ================================
   // ➡️ STEP 2
-  // =========================
-  const goToStep2 = (e) => {
+  // ================================
+  const goToPayment = (e) => {
     e.preventDefault();
 
     if (!formData.nom || !formData.email || !formData.telephone) {
@@ -94,9 +96,9 @@ const FinaliserCommande = () => {
     setStep(2);
   };
 
-  // =========================
-  // 💳 FINALISATION (CORRIGÉE)
-  // =========================
+  // ================================
+  // 💳 FINALISATION
+  // ================================
   const handleFinalize = async () => {
     if (!plan?._id) {
       return toast.error("Plan invalide");
@@ -111,88 +113,101 @@ const FinaliserCommande = () => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          // ✅ CORRECTION ICI
-          plan: { _id: plan._id },
+          plan,
           client: formData
         })
       });
 
-      const text = await res.text();
-
-      let data;
-
-      try {
-        data = JSON.parse(text);
-      } catch (err) {
-        console.error("Réponse non JSON :", text);
-        throw new Error("Réponse serveur invalide");
-      }
+      const data = await res.json();
 
       if (!res.ok) {
         throw new Error(data.error || "Erreur serveur");
       }
 
-      toast.success("Commande réussie !");
       setStep(3);
 
       setTimeout(() => {
-        navigate("/catalogue");
+        navigate("/mes-plans");
       }, 4000);
 
     } catch (err) {
-      console.error("Erreur finalize:", err);
+      console.error("Erreur complète:", err);
       toast.error(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // =========================
-  // UI
-  // =========================
+  // ================================
+  // ❌ SI PLAN ABSENT
+  // ================================
+  if (!plan) {
+    return (
+      <div className="p-20 text-center font-bold">
+        Plan introuvable...
+      </div>
+    );
+  }
+
+  // ================================
+  // 🎨 UI
+  // ================================
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 px-4 pb-20">
+    <div className="bg-[#F8FAFC] min-h-screen pt-32 pb-20 px-4 font-sans">
       <Toaster position="top-right" />
 
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
 
         {/* RETOUR */}
         {step < 3 && (
           <button
-            onClick={() => (step === 1 ? navigate(-1) : setStep(1))}
-            className="flex items-center gap-2 mb-6 text-gray-500 hover:text-green-600"
+            onClick={() =>
+              step === 1 ? navigate(-1) : setStep(1)
+            }
+            className="flex items-center gap-2 text-[10px] font-black text-gray-400 hover:text-green-700 uppercase tracking-widest mb-10"
           >
-            <ArrowLeft size={16} /> Retour
+            <ArrowLeft size={14} />
+            {step === 1 ? "Retour" : "Modifier mes infos"}
           </button>
         )}
 
-        {/* STEP 1 */}
+        {/* ========================= */}
+        {/* ÉTAPE 1 */}
+        {/* ========================= */}
         {step === 1 && (
-          <div className="grid md:grid-cols-2 gap-10">
+          <div className="grid lg:grid-cols-5 gap-12">
 
-            {/* PLAN */}
-            <div className="bg-white p-6 rounded-2xl shadow">
-              <img
-                src={plan?.images?.[0] || "/placeholder.png"}
-                alt=""
-                className="w-full h-48 object-cover rounded-xl mb-4"
-              />
-              <h3 className="font-bold">{plan?.name}</h3>
-              <p className="text-green-600 font-bold mt-2">
-                {plan?.price} FCFA
-              </p>
+            {/* RÉSUMÉ */}
+            <div className="lg:col-span-2">
+              <div className="bg-white p-8 rounded-[2rem] shadow-sm">
+                <img
+                  src={plan.images?.[0]}
+                  alt={plan.name}
+                  className="w-full aspect-video object-cover rounded-xl mb-6"
+                />
+                <h4 className="font-black text-lg">{plan.name}</h4>
+
+                <div className="mt-6 flex justify-between">
+                  <span>Total</span>
+                  <span className="font-bold text-green-700">
+                    {plan.price} FCFA
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* FORM */}
-            <form onSubmit={goToStep2} className="bg-white p-6 rounded-2xl shadow space-y-4">
-
+            <form
+              onSubmit={goToPayment}
+              className="lg:col-span-3 bg-white p-8 rounded-[2rem] shadow-sm space-y-6"
+            >
               <input
                 type="text"
                 name="nom"
                 placeholder="Nom complet"
-                onChange={handleChange}
                 required
-                className="w-full p-3 border rounded"
+                onChange={handleChange}
+                className="w-full p-4 bg-gray-50 rounded-xl"
               />
 
               <div>
@@ -200,84 +215,97 @@ const FinaliserCommande = () => {
                   type="email"
                   name="email"
                   placeholder="Email"
-                  onChange={handleChange}
                   required
-                  className="w-full p-3 border rounded"
+                  onChange={handleChange}
+                  className="w-full p-4 bg-gray-50 rounded-xl"
                 />
 
-                <p className="text-xs mt-1 text-gray-400">
-                  {checkingEmail
-                    ? "Vérification..."
-                    : formData.email
-                    ? emailExists
+                {/* STATUS EMAIL */}
+                {formData.email && (
+                  <p className="text-xs mt-2">
+                    {checkingEmail
+                      ? "Vérification..."
+                      : emailExists
                       ? "✔ Compte existant"
-                      : "➕ Nouveau client"
-                    : ""}
-                </p>
+                      : "➕ Nouveau client"}
+                  </p>
+                )}
               </div>
 
               <input
                 type="tel"
                 name="telephone"
                 placeholder="Téléphone"
-                onChange={handleChange}
                 required
-                className="w-full p-3 border rounded"
+                onChange={handleChange}
+                className="w-full p-4 bg-gray-50 rounded-xl"
               />
 
               {/* PAIEMENT */}
               <div className="grid grid-cols-3 gap-3">
-                {["wave", "orange-money", "carte"].map((p) => (
+                {["wave", "orange-money", "carte"].map((m) => (
                   <label
-                    key={p}
-                    className={`p-3 text-center rounded cursor-pointer border ${
-                      formData.paiement === p
-                        ? "bg-green-100 border-green-600"
+                    key={m}
+                    className={`p-4 rounded-xl text-center cursor-pointer border ${
+                      formData.paiement === m
+                        ? "border-green-600 bg-green-50"
                         : "bg-gray-50"
                     }`}
                   >
                     <input
                       type="radio"
                       name="paiement"
-                      value={p}
+                      value={m}
                       onChange={handleChange}
                       className="hidden"
                     />
-                    {p}
+                    {m}
                   </label>
                 ))}
               </div>
 
-              <button className="w-full bg-black text-white py-3 rounded">
-                Continuer
+              <button className="w-full bg-black text-white py-4 rounded-xl">
+                Suivant
               </button>
             </form>
           </div>
         )}
 
-        {/* STEP 2 */}
+        {/* ========================= */}
+        {/* ÉTAPE 2 */}
+        {/* ========================= */}
         {step === 2 && (
           <div className="max-w-md mx-auto text-center space-y-6">
-            <h2 className="text-xl font-bold">Confirmer paiement</h2>
+            <h2 className="text-xl font-bold">
+              Paiement {formData.paiement}
+            </h2>
 
-            <p className="text-lg">{plan.price} FCFA</p>
+            <p>{plan.price} FCFA</p>
 
             <button
               onClick={handleFinalize}
               disabled={loading}
-              className="w-full bg-black text-white py-4 rounded flex justify-center"
+              className="w-full bg-black text-white py-4 rounded-xl flex justify-center"
             >
               {loading ? <Loader2 className="animate-spin" /> : "Confirmer"}
             </button>
           </div>
         )}
 
-        {/* STEP 3 */}
+        {/* ========================= */}
+        {/* ÉTAPE 3 */}
+        {/* ========================= */}
         {step === 3 && (
-          <div className="text-center space-y-4">
+          <div className="text-center space-y-6">
             <CheckCircle size={60} className="mx-auto text-green-600" />
-            <h2 className="text-2xl font-bold">Commande réussie</h2>
-            <p>Votre plan a été envoyé à {formData.email}</p>
+
+            <h2 className="text-2xl font-bold">
+              Commande réussie
+            </h2>
+
+            <p>
+              Le plan a été envoyé à <b>{formData.email}</b>
+            </p>
           </div>
         )}
 

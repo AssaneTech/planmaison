@@ -2,11 +2,7 @@ const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-
-/* ================================
-   CONFIG BACKEND URL (IMPORTANT)
-================================ */
-const BASE_URL = process.env.BASE_URL || "https://backend-planmaison.onrender.com";
+const { exec } = require('child_process');
 
 /* ================================
    TON PLAN (TES DONNÉES)
@@ -20,16 +16,16 @@ const PLAN = {
   type: "Rue",
 
   images: [
-    `${BASE_URL}/storage/plan3/image_0.png`
+    "http://localhost:5000/storage/plan3/image_0.png"
   ],
 
   pdfs: [
-    `${BASE_URL}/storage/plan3/pdfs/1_rdc.pdf`,
-    `${BASE_URL}/storage/plan3/pdfs/2_etage1.pdf`,
-    `${BASE_URL}/storage/plan3/pdfs/3_etage2.pdf`,
-    `${BASE_URL}/storage/plan3/pdfs/4_etage3.pdf`,
-    `${BASE_URL}/storage/plan3/pdfs/5_situation.pdf`,
-    `${BASE_URL}/storage/plan3/pdfs/6_masse.pdf`
+    "http://localhost:5000/storage/plan3/pdfs/1_rdc.pdf",
+    "http://localhost:5000/storage/plan3/pdfs/2_etage1.pdf",
+    "http://localhost:5000/storage/plan3/pdfs/3_etage2.pdf",
+    "http://localhost:5000/storage/plan3/pdfs/4_etage3.pdf",
+    "http://localhost:5000/storage/plan3/pdfs/5_situation.pdf",
+    "http://localhost:5000/storage/plan3/pdfs/6_masse.pdf"
   ]
 };
 
@@ -37,19 +33,10 @@ const PLAN = {
    TELECHARGER FICHIER
 ================================ */
 async function fetchFile(url) {
-  try {
-    console.log("📥 Téléchargement :", url);
-
-    const response = await axios.get(url, {
-      responseType: 'arraybuffer'
-    });
-
-    return response.data;
-
-  } catch (err) {
-    console.error("❌ ERREUR TELECHARGEMENT :", url);
-    throw err;
-  }
+  const response = await axios.get(url, {
+    responseType: 'arraybuffer'
+  });
+  return response.data;
 }
 
 /* ================================
@@ -89,6 +76,8 @@ async function generatePdf(plan) {
 
   /* ========= IMAGE ========= */
   try {
+    console.log("📥 Téléchargement image...");
+
     const imageBytes = await fetchFile(plan.images[0]);
 
     let image;
@@ -117,13 +106,15 @@ async function generatePdf(plan) {
   });
 
   /* ========= TRI DES PDFS ========= */
-  const sortedPdfs = [...plan.pdfs].sort((a, b) => {
+  const sortedPdfs = plan.pdfs.sort((a, b) => {
     return a.localeCompare(b, undefined, { numeric: true });
   });
 
   /* ========= AJOUT DES PDFS ========= */
   for (const pdfUrl of sortedPdfs) {
     try {
+      console.log("📥 Téléchargement :", pdfUrl);
+
       const pdfBytes = await fetchFile(pdfUrl);
       const pdf = await PDFDocument.load(pdfBytes);
 
@@ -153,7 +144,7 @@ async function generatePdf(plan) {
   const outputDir = path.join(__dirname, 'generated');
 
   if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
+    fs.mkdirSync(outputDir);
   }
 
   const outputPath = path.join(outputDir, `DOSSIER_${plan._id}.pdf`);
@@ -164,12 +155,11 @@ async function generatePdf(plan) {
   console.log("\n✅ PDF généré avec succès !");
   console.log("📄 Fichier :", outputPath);
 
-  return outputPath; // ✅ IMPORTANT pour ton backend
+  /* ========= OUVERTURE AUTOMATIQUE (WINDOWS) ========= */
+  exec(`start "" "${outputPath}"`);
 }
 
 /* ================================
-   EXPORT POUR TON BACKEND
+   EXECUTION
 ================================ */
-module.exports = {
-  generatePdf
-};
+generatePdf(PLAN);
