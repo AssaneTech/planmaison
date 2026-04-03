@@ -15,6 +15,12 @@ const path = require("path");
 const cors = require("cors");
 
 // Initialisation de l'application Express
+//10.221.15.241 salle  technique
+//10.221.15.242 teranga
+//10.221.15.243 switch principal 
+//10.221.15.244 salle autocom
+//10.221.15.245 salle autocom
+
 const app = express();
 
 // Middleware pour parser le JSON (Placer avant les routes)
@@ -22,7 +28,7 @@ app.use(express.json());
 
 // Configuration CORS
 
-app.use(cors({
+/*app.use(cors({
   origin: function (origin, callback) {
     // autorise requêtes sans origin (Postman, mobile apps)
     if (!origin) return callback(null, true);
@@ -35,6 +41,11 @@ app.use(cors({
   },
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
+}));*/
+const cors = require("cors");
+
+app.use(cors({
+  origin: "*"
 }));
 
 // Servir les fichiers statiques
