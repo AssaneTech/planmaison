@@ -167,13 +167,14 @@ const processFinalOrder = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ ERREUR GLOBAL :", error);
+  console.error("❌ ERREUR COMPLETE :", error);
+  console.error("STACK :", error.stack);
 
-    return res.status(500).json({
-      error: "Erreur serveur",
-      details: error.message
-    });
-  }
+  return res.status(500).json({
+    error: "Erreur serveur",
+    details: error.message
+  });
+}
 };
 
 /**
