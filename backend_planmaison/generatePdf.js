@@ -171,5 +171,5 @@ async function generatePdf(plan) {
    EXPORT POUR TON BACKEND
 ================================ */
 module.exports = {
-  generatePdf
+  generateFullProjectPdf: generatePdf
 };
