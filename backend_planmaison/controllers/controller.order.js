@@ -1,32 +1,47 @@
+const bcrypt = require("bcrypt");
+const path = require("path");
+
+const User = require("../models/model.user");
+const Order = require("../models/model.order");
+const Plan = require("../models/model.plan");
+
+const { generateFullProjectPdf } = require("../utils/generatePdf");
+const sendEmail = require("../utils/utils.sendEmail");
+
+/**
+ * ================================
+ * FINALISER UNE COMMANDE
+ * ================================
+ */
 const processFinalOrder = async (req, res) => {
   try {
     const { plan: planFromFront, client } = req.body;
 
-    console.log("📥 BODY RECU :", req.body);
+    console.log("📥 BODY :", req.body);
 
-    // ================================
-    // 🔒 VALIDATION
-    // ================================
+    // ========================
+    // VALIDATION
+    // ========================
     if (!planFromFront || !planFromFront._id || !client || !client.email) {
       return res.status(400).json({ error: "Données invalides." });
     }
 
-    // ================================
-    // 📦 RECUP PLAN
-    // ================================
+    // ========================
+    // RECUP PLAN
+    // ========================
     const plan = await Plan.findById(planFromFront._id).lean();
 
     if (!plan) {
-      return res.status(404).json({ error: "Plan introuvable en base de données." });
+      return res.status(404).json({ error: "Plan introuvable." });
     }
 
-    console.log("✅ PLAN OK :", plan.name);
+    console.log("✅ PLAN :", plan.name);
 
     const clientEmail = client.email.toLowerCase().trim();
 
-    // ================================
-    // 👤 USER (FIX CRITIQUE)
-    // ================================
+    // ========================
+    // USER (ANTI CRASH)
+    // ========================
     let user = await User.findOne({ email: clientEmail });
 
     if (!user) {
@@ -38,29 +53,28 @@ const processFinalOrder = async (req, res) => {
         role: "client"
       });
 
-      console.log("🆕 USER CRÉÉ :", clientEmail);
-    } else {
-      console.log("👤 USER EXISTANT :", clientEmail);
+      console.log("🆕 USER CRÉÉ");
     }
 
     const userId = user._id;
 
-    // ================================
-    // 🔖 REF COMMANDE
-    // ================================
+    // ========================
+    // REFERENCE
+    // ========================
     const orderRef = `PM-${Date.now()}-${Math.random()
       .toString(36)
       .substring(2, 6)
       .toUpperCase()}`;
 
-    // ================================
-    // 📄 PAYLOAD PDF
-    // ================================
-    const BASE_URL = process.env.BASE_URL || "https://backend-planmaison.onrender.com";
+    // ========================
+    // PDF PAYLOAD
+    // ========================
+    const BASE_URL =
+      process.env.BASE_URL || "https://backend-planmaison.onrender.com";
 
     const pdfPayload = {
       _id: plan._id,
-      name: plan.name || "Villa Moderne",
+      name: plan.name || "Villa",
       client: (client.nom || "Client").toUpperCase(),
       ref: orderRef,
       rccm: "SN.MBR.2024.A.2346",
@@ -79,31 +93,30 @@ const processFinalOrder = async (req, res) => {
       pdfs: plan.pdfs || []
     };
 
-    console.log("⏳ Génération PDF...");
-
-    // ================================
-    // 🧠 GENERATION PDF (ANTI CRASH)
-    // ================================
+    // ========================
+    // GENERATION PDF (SAFE)
+    // ========================
     let downloadUrl = "";
 
     try {
+      console.log("⏳ Génération PDF...");
+
       const generatedPdfPath = await generateFullProjectPdf(pdfPayload);
 
       const fileName = path.basename(generatedPdfPath);
 
       downloadUrl = `/storage/generated/${fileName}`;
 
-      console.log("✅ PDF OK :", downloadUrl);
-
+      console.log("✅ PDF OK");
     } catch (err) {
-      console.error("❌ ERREUR PDF :", err.message);
+      console.error("❌ PDF ERROR :", err.message);
 
-      downloadUrl = "/storage/generated/default.pdf"; // fallback
+      downloadUrl = "/storage/generated/default.pdf";
     }
 
-    // ================================
-    // 💾 ENREGISTRER COMMANDE
-    // ================================
+    // ========================
+    // CREER COMMANDE
+    // ========================
     const newOrder = await Order.create({
       user: userId,
       plan: plan._id,
@@ -113,52 +126,140 @@ const processFinalOrder = async (req, res) => {
       status: "Completed"
     });
 
-    console.log("🧾 COMMANDE CRÉÉE :", orderRef);
+    console.log("🧾 COMMANDE CRÉÉE");
 
-    // ================================
-    // 📚 MAJ USER
-    // ================================
+    // ========================
+    // AJOUT AU USER
+    // ========================
     await User.findByIdAndUpdate(userId, {
       $push: {
         purchasedPlans: {
           plan: plan._id,
-          downloadUrl: downloadUrl
+          downloadUrl
         }
       }
     });
 
-    console.log("📚 PLAN AJOUTÉ AU USER");
+    console.log("📚 AJOUT USER OK");
 
-    // ================================
-    // 📧 EMAIL (OPTIONNEL SAFE)
-    // ================================
+    // ========================
+    // EMAIL (SAFE)
+    // ========================
     try {
       await sendEmail({
         to: clientEmail,
         subject: "Votre plan est prêt",
-        text: `Votre plan est disponible ici : ${downloadUrl}`
+        text: `Téléchargement : ${downloadUrl}`
       });
 
-      console.log("📧 EMAIL ENVOYÉ");
+      console.log("📧 EMAIL OK");
     } catch (err) {
       console.error("❌ EMAIL ERROR :", err.message);
     }
 
-    // ================================
-    // ✅ REPONSE
-    // ================================
+    // ========================
+    // RESPONSE
+    // ========================
     return res.status(201).json({
       success: true,
-      message: "Commande finalisée avec succès",
+      message: "Commande réussie",
       downloadUrl
     });
 
   } catch (error) {
-    console.error("❌ ERREUR FINAL ORDER :", error);
+    console.error("❌ ERREUR GLOBAL :", error);
 
     return res.status(500).json({
       error: "Erreur serveur",
       details: error.message
     });
   }
+};
+
+/**
+ * ================================
+ * COMMANDES UTILISATEUR
+ * ================================
+ */
+const getUserOrders = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const orders = await Order.find({ user: userId })
+      .populate("plan")
+      .sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+};
+
+/**
+ * ================================
+ * ADMIN - TOUTES COMMANDES
+ * ================================
+ */
+const getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate("user", "firstName email")
+      .populate("plan", "name")
+      .sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+};
+
+/**
+ * ================================
+ * CRUD SIMPLE
+ * ================================
+ */
+const createOrder = async (req, res) => {
+  try {
+    const order = await Order.create(req.body);
+    res.status(201).json(order);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const updateOrder = async (req, res) => {
+  try {
+    const updated = await Order.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const deleteOrder = async (req, res) => {
+  try {
+    await Order.findByIdAndDelete(req.params.id);
+    res.json({ message: "Supprimé" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * ================================
+ * EXPORT
+ * ================================
+ */
+module.exports = {
+  processFinalOrder,
+  getUserOrders,
+  getAllOrders,
+  createOrder,
+  updateOrder,
+  deleteOrder
 };
